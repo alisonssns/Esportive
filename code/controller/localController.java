@@ -1,22 +1,19 @@
 package controller;
 
-import model.localModel;
-import view.localView;
+import model.LocalModel;
+import view.LocalView;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Scanner;
 
-import javax.crypto.Cipher;
-
-public class localController {
+public class LocalController {
     Scanner scanner = new Scanner(System.in);
 
-    private localView view = new localView();
-    private localModel model = new localModel();
+    private LocalView view = new LocalView();
+    private LocalModel model = new LocalModel();
 
     public void cadastrar(Scanner scanner) {
         view.cadastrar(scanner, model);
@@ -38,15 +35,15 @@ public class localController {
         }
     }
 
-    public void listar(Scanner scanner) {
+    public void listar() {
         String sql = "SELECT * FROM local";
 
         try (Connection conn = Conector.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery();) {
-
             view.listar(rs);
         } catch (SQLException e) {
+            System.out.println("Erro: " + e.getMessage());
         }
         ;
     }

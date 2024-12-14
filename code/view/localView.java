@@ -3,13 +3,13 @@ package view;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
-import model.localModel;
+import model.LocalModel;
 
-public class localView {
+public class LocalView {
 
-    public localModel local;
+    public LocalModel local;
 
-    public void cadastrar(Scanner scanner, localModel local) {
+    public void cadastrar(Scanner scanner, LocalModel local) {
         System.out.print("Nome: ");
         local.setNome(scanner.nextLine());
         System.out.print("Cep: ");
@@ -23,18 +23,13 @@ public class localView {
     }
 
     public void listar(ResultSet rs) throws SQLException {
-        System.out.printf("| %-5s | %-20s | %-20s | %-10s | %-10s | %-6s |%n",
+        System.out.printf("| %-5s | %-30s | %-20s | %-10s | %-10s | %-6s |%n",
                 "ID", "Nome", "Tipo", "Capacidade", "CEP", "Número");
-        System.out.println("-----------------------------------------------------------------------------------------");
+        System.out.println("---------------------------------------------------------------------------------------------------");
 
         while (rs.next()) {
-            System.out.printf("| %-5s | %-20s | %-20s | %-10s | %-10s | %-6s |%n",
-                    rs.getInt("idLocal"),
-                    rs.getString("nome"),
-                    rs.getString("tipo"),
-                    rs.getInt("capacidade"),
-                    rs.getString("cep"),
-                    rs.getInt("numero"));
+            System.out.printf("| %-5s | %-30s | %-20s | %-10s | %-10s | %-6s |%n",
+                rs.getInt("idLocal"), rs.getString("nome"), rs.getString("tipo"), rs.getInt("capacidade"), rs.getString("cep"), rs.getInt("numero"));
         }
     }
 }

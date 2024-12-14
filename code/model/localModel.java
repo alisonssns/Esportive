@@ -1,6 +1,6 @@
 package model;
 
-public class localModel {
+public class LocalModel {
     private String nome;
     private String tipo;
     private int capacidade;
