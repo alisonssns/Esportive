@@ -1,6 +1,6 @@
 package model; // Pacote onde a classe está localizada
 
-public class UsuarioModel {
+public class GenericModel {
     private String Cpf;
     private String nome;
     private String email;

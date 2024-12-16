@@ -1,6 +1,6 @@
 import java.util.Scanner;
 import controller.UsuarioController;
-import model.UsuarioModel;
+import model.GenericModel;
 import view.UsuarioView;
 
 public class Main {
@@ -8,7 +8,7 @@ public class Main {
     Scanner scanner = new Scanner(System.in);
     UsuarioController controller = new UsuarioController();
     UsuarioView view = new UsuarioView();
-    UsuarioModel model = new UsuarioModel();
+    GenericModel model = new GenericModel();
     int opcao;
     boolean logado = false;
 

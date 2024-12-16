@@ -1,7 +1,7 @@
 package controller;
 
 import model.ReservaModel;
-import model.UsuarioModel;
+import model.GenericModel;
 import view.UsuarioView;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,13 +9,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
-public class UsuarioController {
+public class UsuarioController implements IUser {
 
     private final UsuarioView view = new UsuarioView();
-    private final UsuarioModel model = new UsuarioModel();
+    private final GenericModel model = new GenericModel();
     private final LocalController localController = new LocalController();
     private final ReservaModel modelReserva = new ReservaModel();
 
+    @Override
     public void cadastrar(Scanner scanner) {
         view.cadastrar(scanner, model);
 
@@ -53,7 +54,8 @@ public class UsuarioController {
         }
     }
 
-    public boolean logar(Scanner scanner, UsuarioModel model) {
+    @Override
+    public boolean logar(Scanner scanner, GenericModel model) {
         view.logar(scanner, model);
 
         String sqlUsuario = "SELECT * FROM usuario WHERE email = ? AND senha = ?";
@@ -72,6 +74,7 @@ public class UsuarioController {
 
                         try (ResultSet rsTelefone = stmtTelefone.executeQuery()) {
                             if (rsTelefone.next()) {
+                                System.out.println(rsTelefone.getString("numero"));
                                 model.setTelefone(rsTelefone.getString("numero"));
                             }
                         }
@@ -81,7 +84,7 @@ public class UsuarioController {
                     System.out.println("Seja bem-vindo: " + rsUsuario.getString("nome"));
                     view.logSuccess(rsUsuario, model);
                     return true;
-                    
+
                 } else {
                     System.out.println("Usuário não encontrado.");
                 }
@@ -92,7 +95,7 @@ public class UsuarioController {
         return false;
     }
 
-    public void fazerReserva(Scanner scanner, UsuarioModel model) {
+    public void fazerReserva(Scanner scanner, GenericModel model) {
         localController.listar();
         view.fazerReserva(scanner, modelReserva);
 
@@ -114,13 +117,93 @@ public class UsuarioController {
         }
     }
 
-    public void cancelarReserva() {
+    public void listarReservas(Scanner scanner, GenericModel model) {
+        String sql = "SELECT * FROM reserva WHERE cpfUsuario = ?";
+        try (Connection conn = Conector.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, model.getCpf());
+            try (ResultSet rs = stmt.executeQuery()) {
+                view.listarReservas(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
     }
-    public void atualizarInfo() {
+
+    public void cancelarReserva(Scanner scanner, GenericModel model) {
+        listarReservas(scanner, model);
+        System.out.println("Digite o ID da reserva que deseja cancelar: ");
+        int idReserva = scanner.nextInt();
+
+        String sql = "DELETE FROM reserva WHERE idreserva = ? AND cpfUsuario = ?";
+
+        try (Connection conn = Conector.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idReserva);
+            stmt.setString(2, model.getCpf());
+            int rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Reserva cancelada com sucesso!");
+            } else {
+                System.out.println("Reserva não encontrada ou não pertence ao usuário.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao cancelar reserva: " + e.getMessage());
+        }
     }
 
-    public void avaliarEspaco() {
-
+    @Override
+    public void mostraInfo(GenericModel model) {
+        System.out.printf("CPF:           %s%n", model.getCpf());
+        System.out.printf("Nome:          %s%n", model.getNome());
+        System.out.printf("E-mail:        %s%n", model.getEmail());
+        System.out.printf("Senha:         %s%n", model.getSenha());
+        System.out.println("------------------------------------");
+        System.out.printf("Rua:           %s%n", model.getRua());
+        System.out.printf("Bairro:        %s%n", model.getBairro());
+        System.out.printf("Cidade:        %s%n", model.getCidade());
+        System.out.printf("CEP:           %s%n", model.getCep());
+        System.out.printf("Estado:        %s%n", model.getEstado());
+        System.out.printf("Número:        %s%n", model.getNumero());
+        System.out.println("------------------------------------");
+        System.out.printf("Telefone:      %s%n", model.getTelefone());
+        System.out.println("====================================");
     }
+
+    @Override
+    public void atualizarInfo(Scanner scanner, GenericModel model) {
+        System.out.println("Digite o novo nome: ");
+        String novoNome = scanner.nextLine();
+        System.out.println("Digite o novo e-mail: ");
+        String novoEmail = scanner.nextLine();
+        System.out.println("Digite a nova senha: ");
+        String novaSenha = scanner.nextLine();
+
+        String sql = "UPDATE usuario SET nome = ?, email = ?, senha = ? WHERE cpf = ?";
+
+        try (Connection conn = Conector.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, novoNome);
+            stmt.setString(2, novoEmail);
+            stmt.setString(3, novaSenha);
+            stmt.setString(4, model.getCpf());
+            int rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                model.setNome(novoNome);
+                model.setEmail(novoEmail);
+                model.setSenha(novaSenha);
+                System.out.println("Informações atualizadas com sucesso!");
+            } else {
+                System.out.println("Erro ao atualizar informações. Usuário não encontrado.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao atualizar informações: " + e.getMessage());
+        }
+    }
+
 }

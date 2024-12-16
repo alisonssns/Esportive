@@ -9,9 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
-public class LocalController {
+public class LocalController{
     Scanner scanner = new Scanner(System.in);
-
+    
     private LocalView view = new LocalView();
     private LocalModel model = new LocalModel();
 
