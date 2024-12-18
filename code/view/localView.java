@@ -1,9 +1,10 @@
 package view;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Scanner;
 import model.LocalModel;
+
+import java.sql.SQLException;
+import java.sql.ResultSet;
+import java.util.Scanner;
 
 public class LocalView {
 

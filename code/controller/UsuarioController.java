@@ -3,10 +3,11 @@ package controller;
 import model.ReservaModel;
 import model.GenericModel;
 import view.UsuarioView;
-import java.sql.Connection;
+
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.Scanner;
 
 public class UsuarioController implements IUser {
@@ -205,5 +206,4 @@ public class UsuarioController implements IUser {
             System.out.println("Erro ao atualizar informações: " + e.getMessage());
         }
     }
-
 }

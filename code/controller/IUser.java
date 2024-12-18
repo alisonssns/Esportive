@@ -1,8 +1,8 @@
 package controller;
 
-import java.util.Scanner;
-
 import model.GenericModel;
+
+import java.util.Scanner;
 
 public interface IUser {
     void cadastrar(Scanner scanner);

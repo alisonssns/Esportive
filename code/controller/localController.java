@@ -3,10 +3,10 @@ package controller;
 import model.LocalModel;
 import view.LocalView;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.Scanner;
 
 public class LocalController{
