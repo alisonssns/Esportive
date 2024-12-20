@@ -1,7 +1,7 @@
 package controller;
 
 import model.ReservaModel;
-import model.GenericModel;
+import model.UsuarioModel;
 import view.UsuarioView;
 
 import java.sql.PreparedStatement;
@@ -10,10 +10,10 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Scanner;
 
-public class UsuarioController implements IUser {
+public class UsuarioController implements IUserAdmController {
 
     private final UsuarioView view = new UsuarioView();
-    private final GenericModel model = new GenericModel();
+    private final UsuarioModel model = new UsuarioModel();
     private final LocalController localController = new LocalController();
     private final ReservaModel modelReserva = new ReservaModel();
 
@@ -56,7 +56,7 @@ public class UsuarioController implements IUser {
     }
 
     @Override
-    public boolean logar(Scanner scanner, GenericModel model) {
+    public boolean logar(Scanner scanner) {
         view.logar(scanner, model);
 
         String sqlUsuario = "SELECT * FROM usuario WHERE email = ? AND senha = ?";
@@ -96,7 +96,8 @@ public class UsuarioController implements IUser {
         return false;
     }
 
-    public void fazerReserva(Scanner scanner, GenericModel model) {
+    @Override
+    public void fazerReserva(Scanner scanner) {
         localController.listar();
         view.fazerReserva(scanner, modelReserva);
 
@@ -118,7 +119,8 @@ public class UsuarioController implements IUser {
         }
     }
 
-    public void listarReservas(Scanner scanner, GenericModel model) {
+    @Override
+    public void listarReservas(Scanner scanner) {
         String sql = "SELECT * FROM reserva WHERE cpfUsuario = ?";
         try (Connection conn = Conector.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -129,11 +131,11 @@ public class UsuarioController implements IUser {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
     }
 
-    public void cancelarReserva(Scanner scanner, GenericModel model) {
-        listarReservas(scanner, model);
+    @Override
+    public void cancelarReserva(Scanner scanner) {
+        listarReservas(scanner);
         System.out.println("Digite o ID da reserva que deseja cancelar: ");
         int idReserva = scanner.nextInt();
 
@@ -157,7 +159,7 @@ public class UsuarioController implements IUser {
     }
 
     @Override
-    public void mostraInfo(GenericModel model) {
+    public void exibirInfo() {
         System.out.printf("CPF:           %s%n", model.getCpf());
         System.out.printf("Nome:          %s%n", model.getNome());
         System.out.printf("E-mail:        %s%n", model.getEmail());
@@ -175,7 +177,7 @@ public class UsuarioController implements IUser {
     }
 
     @Override
-    public void atualizarInfo(Scanner scanner, GenericModel model) {
+    public void atualizarInfo(Scanner scanner) {
         System.out.println("Digite o novo nome: ");
         String novoNome = scanner.nextLine();
         System.out.println("Digite o novo e-mail: ");
@@ -206,4 +208,5 @@ public class UsuarioController implements IUser {
             System.out.println("Erro ao atualizar informações: " + e.getMessage());
         }
     }
+
 }

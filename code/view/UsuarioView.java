@@ -1,9 +1,5 @@
 package view;
 
-import controller.UsuarioController;
-import model.GenericModel;
-import model.ReservaModel;
-
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.regex.Pattern;
@@ -12,127 +8,147 @@ import java.sql.ResultSet;
 import java.util.Scanner;
 import java.sql.Time;
 
+import controller.UsuarioController;
+import model.UsuarioModel;
+import model.ReservaModel;
+
 public class UsuarioView {
 
     private static final String PADRAO_EMAIL = "^[a-zA-Z0-9._%+-]+@gmail\\.com$";
     private static final String PADRAO_TELEFONE = "^\\(\\d{2}\\) 9\\d{4}-\\d{4}$";
 
-    private String lerEntradaComValidacao(Scanner scanner, String mensagem, String padrao, String erro) {
-        String entrada;
-        while (true) {
-            System.out.print(mensagem);
-            entrada = scanner.nextLine();
-            if (Pattern.matches(padrao, entrada)) {
-                break;
-            }
-            System.out.println(erro);
-        }
-        return entrada;
-    }
-
-    public void cadastrar(Scanner scanner, GenericModel usuario) {
-
+    public void cadastrar(Scanner scanner, UsuarioModel usuario) {
         do {
             System.out.print("Cpf: ");
             usuario.setCpf(scanner.nextLine());
-        } while (!validarCpf(usuario));
+        } while (!validarCpfUsuario(usuario));
 
-        while (true) {
-            System.out.print("Nome: ");
-            usuario.setNome(scanner.nextLine());
-            if (!(usuario.getNome().length() <= 3) && !(usuario.getNome().matches(".*\\d.*"))) {
-                break;
-            }else{
-                System.out.println("Nome inválido, tente novamente!");
-            }
-        }
+        usuario.setNome(lerNomeUsuario(scanner));
 
-        usuario.setEmail(lerEntradaComValidacao(
-                scanner,
-                "Email (user@gmail.com): ",
-                PADRAO_EMAIL,
+        usuario.setEmail(lerEntradaComValidacaoRegex(scanner, "Email (user@gmail.com): ", PADRAO_EMAIL,
                 "O email inserido não é válido. Tente novamente!"));
 
         System.out.print("Senha: ");
         usuario.setSenha(scanner.nextLine());
 
-        usuario.setTelefone(lerEntradaComValidacao(
-                scanner,
-                "Telefone ((xx) 9xxxx-xxxx): ",
-                PADRAO_TELEFONE,
+        usuario.setTelefone(lerEntradaComValidacaoRegex(scanner, "Telefone ((xx) 9xxxx-xxxx): ", PADRAO_TELEFONE,
                 "O telefone inserido não segue o padrão. Tente novamente!"));
     }
 
-    public void logar(Scanner scanner, GenericModel usuario) {
-        System.out.print("Email: ");
+    public void logar(Scanner scanner, UsuarioModel usuario) {
         usuario.setEmail(scanner.nextLine());
-        System.out.print("Senha: ");
         usuario.setSenha(scanner.nextLine());
     }
 
-    public void logSuccess(ResultSet rs, GenericModel model) throws SQLException {
+    public void logSuccess(ResultSet rs, UsuarioModel model) throws SQLException {
         model.setCpf(rs.getString("cpf"));
         model.setNome(rs.getString("nome"));
         model.setRua(rs.getString("rua"));
         model.setBairro(rs.getString("bairro"));
         model.setCidade(rs.getString("cidade"));
-        model.setCep(rs.getString("cep"));
+        model.setCep(rs.getInt("cep"));
         model.setEstado(rs.getString("estado"));
-        model.setNumero(rs.getString("numero"));
+        model.setNumero(rs.getInt("numero"));
     }
 
-    public void showInterface(GenericModel model, Scanner scanner, UsuarioController controller) {
+    public boolean exibirTelaInicial(UsuarioModel model, Scanner scanner, UsuarioController controller) {
+        int opcao;
+        exibirMenuInicial();
+        opcao = lerOpcaoDoUsuario(scanner);
+
+        if (opcao != 6) {
+            return (executarOpcaoTelaInicial(scanner, controller, model, opcao));
+        } else {
+            return false;
+        }
+    }
+
+    public void exibirMenuPrincipal(UsuarioModel model, Scanner scanner, UsuarioController controller) {
         int opcao;
         do {
-            System.out.println("\n--- Menu Usuario ---");
-            System.out.println("1. Fazer reserva");
-            System.out.println("2. Listar Reservas");
-            System.out.println("3. Cancelar Reserva");
-            System.out.println("4. Informações pessoais");
-            System.out.println("5. Alterar informações");
-            System.out.println("6. Sair");
-            System.out.print("Escolha uma opção: ");
+            exibirMenuPrincipal();
+            opcao = lerOpcaoDoUsuario(scanner);
 
-            if (scanner.hasNextInt()) {
-                opcao = scanner.nextInt();
-                scanner.nextLine();
-
-                switch (opcao) {
-                    case 1:
-                        controller.fazerReserva(scanner, model);
-                        break;
-                    case 2:
-                        controller.listarReservas(scanner, model);
-                        break;
-                    case 3:
-                        controller.cancelarReserva(scanner, model);
-                        break;
-                    case 4:
-                        controller.mostraInfo(model);
-                        break;
-                    case 5:
-                        controller.atualizarInfo(scanner, model);
-                        break;
-                    case 6:
-                        System.out.println("Saindo...");
-                        break;
-                    default:
-                        System.out.println("Opção inválida! Tente novamente.");
-                        break;
-                }
-            } else {
-                System.out.println("Entrada inválida! Por favor, insira um número.");
-                scanner.nextLine();
-                opcao = 0;
+            if (opcao != 6) {
+                executarOpcaoMenuPrincipal(scanner, controller, model, opcao);
             }
         } while (opcao != 6);
+    }
+
+    private void exibirMenuInicial() {
+        System.out.println("\n--- Menu Usuario ---");
+        System.out.println("1. Cadastrar");
+        System.out.println("2. Logar");
+        System.out.println("3. Sair");
+        System.out.print("Escolha uma opção: ");
+    }
+
+    private void exibirMenuPrincipal() {
+        System.out.println("\n--- Menu Usuario ---");
+        System.out.println("1. Fazer reserva");
+        System.out.println("2. Listar Reservas");
+        System.out.println("3. Cancelar Reserva");
+        System.out.println("4. Informações pessoais");
+        System.out.println("5. Alterar informações");
+        System.out.println("6. Sair");
+        System.out.print("Escolha uma opção: ");
+    }
+
+    private int lerOpcaoDoUsuario(Scanner scanner) {
+        if (scanner.hasNextInt()) {
+            return scanner.nextInt();
+        } else {
+            System.out.println("Entrada inválida! Por favor, insira um número.");
+            scanner.nextLine();
+            return 0;
+        }
+    }
+
+    private boolean executarOpcaoTelaInicial(Scanner scanner, UsuarioController controller, UsuarioModel model,
+            int opcao) {
+        boolean logado = false;
+        switch (opcao) {
+            case 1:
+                controller.cadastrar(scanner);
+                break;
+            case 2:
+                logado = controller.logar(scanner);
+                break;
+            default:
+                System.out.println("Opção inválida! Tente novamente.");
+                break;
+        }
+        return logado;
+    }
+
+    private void executarOpcaoMenuPrincipal(Scanner scanner, UsuarioController controller, UsuarioModel model,
+            int opcao) {
+        switch (opcao) {
+            case 1:
+                controller.fazerReserva(scanner);
+                break;
+            case 2:
+                controller.listarReservas(scanner);
+                break;
+            case 3:
+                controller.cancelarReserva(scanner);
+                break;
+            case 4:
+                controller.exibirInfo();
+                break;
+            case 5:
+                controller.atualizarInfo(scanner);
+                break;
+            default:
+                System.out.println("Opção inválida! Tente novamente.");
+                break;
+        }
     }
 
     public void fazerReserva(Scanner scanner, ReservaModel reserva) {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
 
-        // Data e hora atuais
         java.util.Date now = new java.util.Date();
         java.sql.Date currentDate = new java.sql.Date(now.getTime());
         Time currentTime = new Time(now.getTime());
@@ -141,46 +157,53 @@ public class UsuarioView {
         reserva.setIdLocal(scanner.nextInt());
         scanner.nextLine();
 
+        reserva.setData(obterData(scanner, dateFormat, currentDate));
+
+        reserva.setHorario(obterHorario(scanner, timeFormat, currentDate, currentTime));
+
+        reserva.setStatus("PENDENTE");
+    }
+
+    private java.sql.Date obterData(Scanner scanner, SimpleDateFormat dateFormat, java.sql.Date currentDate) {
+        java.sql.Date sqlDate;
         while (true) {
             try {
                 System.out.print("Escolha uma data para sua reserva (dd-MM-yyyy): ");
                 String dataInput = scanner.nextLine();
                 java.util.Date utilDate = dateFormat.parse(dataInput);
-                java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+                sqlDate = new java.sql.Date(utilDate.getTime());
 
-                // Verifica se a data é anterior à data atual
                 if (sqlDate.before(currentDate)) {
                     System.out.println("A data não pode ser anterior à data atual. Tente novamente.");
                     continue;
                 }
-
-                reserva.setData(sqlDate);
                 break;
             } catch (ParseException e) {
                 System.out.println("Formato de data inválido. Tente novamente.");
             }
         }
+        return sqlDate;
+    }
 
+    private Time obterHorario(Scanner scanner, SimpleDateFormat timeFormat, java.sql.Date currentDate,
+            Time currentTime) {
+        Time horario;
         while (true) {
             try {
                 System.out.print("Escolha o horário da reserva (HH:mm): ");
                 String horarioInput = scanner.nextLine();
-                Time horario = new Time(timeFormat.parse(horarioInput).getTime());
+                horario = new Time(timeFormat.parse(horarioInput).getTime());
 
-                // Verifica se o horário é anterior ao horário atual se a data for igual à atual
-                if (reserva.getData().equals(currentDate) && horario.before(currentTime)) {
+                if (horario.before(currentTime) && currentDate.equals(new java.sql.Date(System.currentTimeMillis()))) {
                     System.out.println("O horário não pode ser anterior ao horário atual. Tente novamente.");
                     continue;
                 }
-
-                reserva.setHorario(horario);
                 break;
             } catch (ParseException e) {
                 System.out.println("Formato de horário inválido. Tente novamente.");
             }
         }
-
-        reserva.setStatus("PENDENTE");
+        return horario;
     }
 
     public void listarReservas(ResultSet rs) throws SQLException {
@@ -195,7 +218,32 @@ public class UsuarioView {
         }
     }
 
-    public boolean validarCpf(GenericModel model) {
+    private String lerEntradaComValidacaoRegex(Scanner scanner, String mensagem, String padrao, String erro) {
+        String entrada;
+        while (true) {
+            System.out.print(mensagem);
+            entrada = scanner.nextLine();
+            if (Pattern.matches(padrao, entrada)) {
+                return entrada;
+            }
+            System.out.println(erro);
+        }
+    }
+
+    private String lerNomeUsuario(Scanner scanner) {
+        String nome;
+        while (true) {
+            System.out.print("Nome: ");
+            nome = scanner.nextLine();
+            if (nome.length() > 3 && !nome.matches(".*\\d.*")) {
+                break;
+            }
+            System.out.println("Nome inválido, tente novamente!");
+        }
+        return nome;
+    }
+
+    public boolean validarCpfUsuario(UsuarioModel model) {
         String cpf = model.getCpf();
         if (cpf == null || cpf.length() != 11 || !cpf.matches("\\d{11}")) {
             System.out.println("Este Cpf é inválido, tente novamente!");
@@ -205,17 +253,16 @@ public class UsuarioView {
             System.out.println("Este Cpf é inválido, tente novamente!");
             return false;
         }
-        int fDigit = calcularDigitoVerificador(cpf, 10, 9);
-        int sDigit = calcularDigitoVerificador(cpf, 11, 10);
+        int fDigit = calcularDigitoVerificadorCpf(cpf, 10, 9);
+        int sDigit = calcularDigitoVerificadorCpf(cpf, 11, 10);
         if (!(fDigit == (cpf.charAt(9) - '0') && sDigit == (cpf.charAt(10) - '0'))) {
             System.out.println("Este Cpf é inválido, tente novamente!");
             return false;
-        } else {
-            return true;
         }
+        return true;
     }
 
-    private int calcularDigitoVerificador(String cpf, int pesoInicial, int tamanho) {
+    private int calcularDigitoVerificadorCpf(String cpf, int pesoInicial, int tamanho) {
         int soma = 0;
 
         for (int i = 0; i < tamanho; i++) {
@@ -225,5 +272,13 @@ public class UsuarioView {
 
         int resto = 11 - (soma % 11);
         return (resto >= 10) ? 0 : resto;
+    }
+
+    public boolean validarSenhaUsuario(String senha) {
+        if (senha == null || senha.length() < 8) {
+            System.out.println("A senha deve ter pelo menos 8 caracteres. Tente novamente.");
+            return false;
+        }
+        return true;
     }
 }

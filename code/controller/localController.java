@@ -9,9 +9,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Scanner;
 
-public class LocalController{
+public class LocalController {
     Scanner scanner = new Scanner(System.in);
-    
+
     private LocalView view = new LocalView();
     private LocalModel model = new LocalModel();
 
@@ -37,10 +37,22 @@ public class LocalController{
 
     public void listar() {
         String sql = "SELECT * FROM local";
-
         try (Connection conn = Conector.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery();) {
+            view.listar(rs);
+        } catch (SQLException e) {
+            System.out.println("Erro: " + e.getMessage());
+        }
+        ;
+    }
+
+    public void listarReservas(int idLocal) {
+        String sql = "SELECT * FROM local where idLocal = ?";
+        try (Connection conn = Conector.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery();) {
+            stmt.setInt(1, idLocal);
             view.listar(rs);
         } catch (SQLException e) {
             System.out.println("Erro: " + e.getMessage());
