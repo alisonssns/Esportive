@@ -6,22 +6,35 @@ import view.UsuarioView;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Scanner;
 
 public class UsuarioController implements IUserAdmController {
-
     private final UsuarioView view = new UsuarioView();
     private final UsuarioModel model = new UsuarioModel();
     private final LocalController localController = new LocalController();
     private final ReservaModel modelReserva = new ReservaModel();
 
+    public void iniciar(Scanner scanner) {
+    boolean logado = false;
+    boolean sair = false;
+
+    while (!sair) {
+        if (!logado) {
+            logado = exibirTelaInicial(scanner);
+        } else {
+            logado = exibirMenuPrincipal(scanner);
+        }
+    }
+}
+
     @Override
     public void cadastrar(Scanner scanner) {
         view.cadastrar(scanner, model);
 
-        String sqlUsuario = "INSERT INTO usuario (cpf, nome, email, senha) VALUES (?, ?, ?, ?)";
+        String sqlUsuario = "INSERT INTO usuario (cpf, nome, email, senha, tipo) VALUES (?, ?, ?, ?, ?)";
         String sqlTelefone = "INSERT INTO telefoneusuario (numero, cpfUsuario) VALUES (?, ?)";
 
         try (Connection conn = Conector.getConnection()) {
@@ -32,6 +45,7 @@ public class UsuarioController implements IUserAdmController {
                 stmt.setString(2, model.getNome());
                 stmt.setString(3, model.getEmail());
                 stmt.setString(4, model.getSenha());
+                stmt.setString(5, "cli");
                 stmt.executeUpdate();
             }
 
@@ -83,7 +97,7 @@ public class UsuarioController implements IUserAdmController {
 
                     System.out.println();
                     System.out.println("Seja bem-vindo: " + rsUsuario.getString("nome"));
-                    view.logSuccess(rsUsuario, model);
+                    loginSuccess(rsUsuario);
                     return true;
 
                 } else {
@@ -96,20 +110,28 @@ public class UsuarioController implements IUserAdmController {
         return false;
     }
 
+    private void loginSuccess(ResultSet rsUsuario) throws SQLException {
+        model.setCpf(rsUsuario.getString("cpf"));
+        model.setNome(rsUsuario.getString("nome"));
+        model.setEmail(rsUsuario.getString("email"));
+        model.setSenha(rsUsuario.getString("senha"));
+    }
+
     @Override
     public void fazerReserva(Scanner scanner) {
         localController.listar();
         view.fazerReserva(scanner, modelReserva);
 
-        String sql = "INSERT INTO reserva (cpfUsuario, data, horario, status, idLocal) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO reserva (cpfUsuario, data, horario_inicio, horario_fim, status, idLocal) VALUES (?, ?, ?, ?, ?,?)";
 
         try (Connection conn = Conector.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, model.getCpf());
             stmt.setDate(2, modelReserva.getData());
-            stmt.setTime(3, modelReserva.getHorario());
-            stmt.setString(4, modelReserva.getStatus());
-            stmt.setInt(5, modelReserva.getIdLocal());
+            stmt.setTime(3, Time.valueOf(modelReserva.getHorarioInicio()));
+            stmt.setTime(4, Time.valueOf(modelReserva.getHorarioFim()));
+            stmt.setString(5, modelReserva.getStatus());
+            stmt.setInt(6, modelReserva.getIdLocal());
             stmt.executeUpdate();
 
             System.out.println("Reserva realizada com sucesso!");
@@ -119,12 +141,11 @@ public class UsuarioController implements IUserAdmController {
         }
     }
 
-    @Override
-    public void listarReservas(Scanner scanner) {
+    public void listarReservas(String cpf) {
         String sql = "SELECT * FROM reserva WHERE cpfUsuario = ?";
         try (Connection conn = Conector.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, model.getCpf());
+            stmt.setString(1, cpf);
             try (ResultSet rs = stmt.executeQuery()) {
                 view.listarReservas(rs);
             }
@@ -134,8 +155,8 @@ public class UsuarioController implements IUserAdmController {
     }
 
     @Override
-    public void cancelarReserva(Scanner scanner) {
-        listarReservas(scanner);
+    public void cancelarReserva(Scanner scanner, String cpf) {
+        listarReservas(cpf);
         System.out.println("Digite o ID da reserva que deseja cancelar: ");
         int idReserva = scanner.nextInt();
 
@@ -206,6 +227,83 @@ public class UsuarioController implements IUserAdmController {
             }
         } catch (SQLException e) {
             System.out.println("Erro ao atualizar informações: " + e.getMessage());
+        }
+    }
+    @Override
+    public boolean exibirTelaInicial(Scanner scanner) {
+        int opcao;
+        view.exibirMenuInicial();
+        opcao = lerOpcaoDoUsuario(scanner);
+
+        if (opcao != 3) {
+            scanner.nextLine();
+            return (executarOpcaoTelaInicial(scanner, opcao));
+        } else {
+            System.out.println("Saindo...");
+            System.exit(0);
+            return false;
+        }
+    }
+    @Override
+    public boolean exibirMenuPrincipal(Scanner scanner) {
+        int opcao;
+        do {
+            view.exibirMenuPrincipal();
+            opcao = lerOpcaoDoUsuario(scanner);
+            if (opcao != 6) {
+                executarOpcaoMenuPrincipal(scanner, opcao);
+            }
+        } while (opcao != 6);
+        return false;
+    }
+    
+    private int lerOpcaoDoUsuario(Scanner scanner) {
+        if (scanner.hasNextInt()) {
+            return scanner.nextInt();
+        } else {
+            System.out.println("Entrada inválida! Por favor, insira um número.");
+            scanner.nextLine();
+            return 0;
+        }
+    }
+    
+    private boolean executarOpcaoTelaInicial(Scanner scanner,
+            int opcao) {
+        boolean logado = false;
+        switch (opcao) {
+            case 1:
+                cadastrar(scanner);
+                break;
+            case 2:
+                logado = logar(scanner);
+                break;
+            default:
+                System.out.println("Opção inválida! Tente novamente.");
+                break;
+        }
+        return logado;
+    }
+    
+    private void executarOpcaoMenuPrincipal(Scanner scanner, int opcao) {
+        switch (opcao) {
+            case 1:
+                fazerReserva(scanner);
+                break;
+            case 2:
+                listarReservas(model.getCpf());
+                break;
+            case 3:
+                cancelarReserva(scanner, model.getCpf());
+                break;
+            case 4:
+                exibirInfo();
+                break;
+            case 5:
+                atualizarInfo(scanner);
+                break;
+            default:
+                System.out.println("Opção inválida! Tente novamente.");
+                break;
         }
     }
 

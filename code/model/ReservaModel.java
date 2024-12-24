@@ -1,18 +1,19 @@
 package model;
 
 import java.sql.Date;
-import java.sql.Time;
+import java.time.LocalTime;
 
 public class ReservaModel {
     private Date data;
-    private Time horario;
+    private LocalTime horarioInicio;
+    private LocalTime horarioFim;
     private int idLocal;
     private String status;
 
     public int getIdLocal() {
         return idLocal;
     }
-    
+
     public void setIdLocal(int idLocal) {
         this.idLocal = idLocal;
     }
@@ -25,12 +26,20 @@ public class ReservaModel {
         this.data = data;
     }
 
-    public Time getHorario() {
-        return horario;
+    public LocalTime getHorarioInicio() {
+        return horarioInicio;
     }
 
-    public void setHorario(Time horario) {
-        this.horario = horario;
+    public void setHorarioInicio(LocalTime horarioInicio) {
+        this.horarioInicio = horarioInicio;
+    }
+
+    public LocalTime getHorarioFim() {
+        return horarioFim;
+    }
+
+    public void setHorarioFim(LocalTime horarioFim) {
+        this.horarioFim = horarioFim;
     }
 
     public String getStatus() {

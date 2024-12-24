@@ -1,11 +1,15 @@
 package model;
+import java.time.LocalTime;
 
 public class LocalModel {
     private String nome;
     private String tipo;
-    private int capacidade;
     private String cep;
     private int numero;
+    private int limiteDia;
+    private LocalTime tempoMaximo;
+    private LocalTime horarioAbertura;
+    private LocalTime horarioFechamento;
 
     public String getNome() {
         return nome;
@@ -23,14 +27,6 @@ public class LocalModel {
         this.tipo = tipo;
     }
 
-    public int getCapacidade() {
-        return capacidade;
-    }
-
-    public void setCapacidade(int capacidade) {
-        this.capacidade = capacidade;
-    }
-
     public String getCep() {
         return cep;
     }
@@ -45,6 +41,38 @@ public class LocalModel {
 
     public void setNumero(int numero) {
         this.numero = numero;
+    }
+
+    public int getLimiteDia() {
+        return limiteDia;
+    }
+
+    public void setLimiteDia(int limiteDia) {
+        this.limiteDia = limiteDia;
+    }
+
+    public LocalTime getTempoMaximo() {
+        return tempoMaximo;
+    }
+
+    public void setTempoMaximo(LocalTime tempoMaximo) {
+        this.tempoMaximo = tempoMaximo;
+    }
+
+    public LocalTime getHorarioAbertura() {
+        return horarioAbertura;
+    }
+
+    public void setHorarioAbertura(LocalTime horarioAbertura) {
+        this.horarioAbertura = horarioAbertura;
+    }
+
+    public LocalTime getHorarioFechamento() {
+        return horarioFechamento;
+    }
+
+    public void setHorarioFechamento(LocalTime horarioFechamento) {
+        this.horarioFechamento = horarioFechamento;
     }
 
 }

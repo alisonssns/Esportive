@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS `usuario`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `usuario` (
-  `cpf` char(12) NOT NULL,
+  `cpf` char(11) NOT NULL,
   `nome` varchar(100) DEFAULT NULL,
   `email` varchar(45) DEFAULT NULL,
   `senha` varchar(45) DEFAULT NULL,
@@ -31,9 +31,10 @@ CREATE TABLE `usuario` (
   `rua` varchar(100) DEFAULT NULL,
   `bairro` varchar(45) DEFAULT NULL,
   `cidade` varchar(45) DEFAULT NULL,
-  `cep` varchar(9) DEFAULT NULL,
+  `cep` int DEFAULT NULL,
   `estado` char(2) DEFAULT NULL,
-  `numero` varchar(10) DEFAULT NULL,
+  `numero` int DEFAULT NULL,
+  `status` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`cpf`),
   KEY `idEnderecoUser_idx` (`rua`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
@@ -45,7 +46,7 @@ CREATE TABLE `usuario` (
 
 LOCK TABLES `usuario` WRITE;
 /*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
-INSERT INTO `usuario` VALUES ('01234567890','Rafael','rafael123@gmail.com','senhaRafael','cli','Rua do Sol','Centro','Fortaleza','60000000','CE','400'),('1','1','alisoncracas3@gmail.com','lala1234',NULL,NULL,NULL,NULL,NULL,NULL,NULL),('124739329-13','alisoncracas1@gmail.com','alisoncracas1@gmail.com','lala124',NULL,NULL,NULL,NULL,NULL,NULL,NULL),('12477766613','Alisson','alisoncracas2@gmail.com','lala1234','adm','São Bartolomeu','Monte Santo','Almirante Tamandaré','83501320','PR','415'),('23456789012','JoaoPessoa','joao123@gmail.com','joao123','cli','Rua das Flores','Centro','Curitiba','80000000','PR','100'),('34567890123','Maria','maria123@gmail.com','senhaMaria','cli','Av. Paulista','Bela Vista','São Paulo','01310100','SP','150'),('45678901234','Lucas','lucas123@gmail.com','senhaLucas','cli','Rua das Palmeiras','Jardim Botânico','Rio de Janeiro','22200000','RJ','20'),('56789012345','Ana','ana123@gmail.com','senhaAna','cli','Av. Sete de Setembro','Liberdade','Salvador','40000000','BA','300'),('67890123456','Paulo','paulo123@gmail.com','senhaPaulo','cli','Rua das Andorinhas','Jardim Europa','Porto Alegre','90000000','RS','50'),('78901234567','Clara','clara123@gmail.com','senhaClara','cli','Rua das Palmeiras','Copacabana','Rio de Janeiro','22000000','RJ','500'),('89012345678','Carlos','carlos123@gmail.com','senhaCarlos','cli','Av. Brasil','Centro','São Paulo','01000000','SP','900'),('90123456789','Sofia','sofia123@gmail.com','senhaSofia','cli','Rua dos Lírios','Jardim das Flores','Curitiba','81500000','PR','350');
+INSERT INTO `usuario` VALUES ('11355680905','Ashley Raissa','ashley.santos1808@gmail.com','11062023','cli',NULL,NULL,NULL,NULL,NULL,NULL,NULL),('12309845600','Alisson ','alisoncracas@gmail.com','lala1234','cli','Avenida Atlântica','Praia Grande','Recife',51110000,'PE',468,'Ativo'),('12345678909','João Silva','joao.silva@email.com','dF!4pLm1','cli','Rua das Flores','Centro','Pinhais',83320000,'PR',123,'Bloqueado'),('12473932913','Alis','alisoncracas2@gmail.com','lala1234','admin',NULL,NULL,NULL,NULL,NULL,NULL,NULL),('23456788018','Maria Oliveira','maria.oliveira@email.com','gT#92jXw','cli','Avenida Brasil','Vila Nova','Curitiba',80010000,'PR',456,'Ativo'),('34567888730','Carlos Santos','carlos.santos@email.com','hY7!zWpQ','cli','Rua da Paz','Jardim Alegre','São Paulo',1010000,'SP',789,'Ativo'),('45678989491','Ana Souza','ana.souza@email.com','rE%8kNvX','cli','Rua Primavera','Centro','Rio de Janeiro',20010000,'RJ',321,'Ativo'),('56789080595','Pedro Costa','pedro.costa@email.com','tM@6oLvY','cli','Rua das Palmeiras','Vila Velha','Salvador',40010000,'BA',654,'Ativo'),('67890181878','Mariana Lima','mariana.lima@email.com','vL*3qXpT','cli','Rua das Laranjeiras','Jardim Botânico','Belo Horizonte',3010000,'MG',987,'Ativo'),('78901282961','Lucas Almeida','lucas.almeida@email.com','wP$4rJyM','cli','Avenida Paulista','Bela Vista','São Paulo',1310000,'SP',135,'Ativo'),('89012383040','Fernanda Ferreira','fernanda.ferreira@email.com','xN&9sLyQ','cli','Rua dos Pássaros','Centro','Florianópolis',88010000,'SC',246,'Ativo'),('90123484122','Ricardo Martins','ricardo.martins@email.com','zK!7tMvP','cli','Rua das Acácias','Centro','Porto Alegre',9010000,'RS',357,'Ativo');
 /*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -58,4 +59,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-15 22:13:48
+-- Dump completed on 2024-12-23 11:31:07

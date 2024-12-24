@@ -12,9 +12,10 @@ public interface IUserAdmController {
 
     void fazerReserva(Scanner scanner);
 
-    void listarReservas(Scanner scanner);
-
-    void cancelarReserva(Scanner scanner);
+    void cancelarReserva(Scanner scanner, String cpf);
 
     void exibirInfo();
+
+    boolean exibirTelaInicial(Scanner scanner);
+    boolean exibirMenuPrincipal(Scanner scanner);
 }

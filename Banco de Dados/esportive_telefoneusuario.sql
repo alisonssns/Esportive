@@ -26,10 +26,8 @@ CREATE TABLE `telefoneusuario` (
   `idTelefone` int NOT NULL AUTO_INCREMENT,
   `numero` varchar(15) DEFAULT NULL,
   `cpfUsuario` char(12) DEFAULT NULL,
-  PRIMARY KEY (`idTelefone`),
-  KEY `cpfUsuarioTelefone_idx` (`cpfUsuario`),
-  CONSTRAINT `cpfUsuarioTelefone` FOREIGN KEY (`cpfUsuario`) REFERENCES `usuario` (`cpf`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3;
+  PRIMARY KEY (`idTelefone`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -38,7 +36,7 @@ CREATE TABLE `telefoneusuario` (
 
 LOCK TABLES `telefoneusuario` WRITE;
 /*!40000 ALTER TABLE `telefoneusuario` DISABLE KEYS */;
-INSERT INTO `telefoneusuario` VALUES (1,'(41) 99795-0185','1'),(2,'(41) 99795-0185','124739329-13'),(3,'(41) 99799-4481','23456789012');
+INSERT INTO `telefoneusuario` VALUES (1,'(41) 99795-0185','1'),(2,'(41) 99795-0185','124739329-13'),(3,'(41) 99799-4481','23456789012'),(4,'(41) 99795-0185','12473932913'),(5,'(41) 99538-9282','11355680905');
 /*!40000 ALTER TABLE `telefoneusuario` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -51,4 +49,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-15 22:13:48
+-- Dump completed on 2024-12-23 11:31:08

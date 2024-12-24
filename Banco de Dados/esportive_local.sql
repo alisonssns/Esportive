@@ -26,11 +26,14 @@ CREATE TABLE `local` (
   `idLocal` int NOT NULL AUTO_INCREMENT,
   `nome` varchar(100) DEFAULT NULL,
   `tipo` varchar(45) DEFAULT NULL,
-  `capacidade` smallint DEFAULT NULL,
   `cep` varchar(9) DEFAULT NULL,
   `numero` int DEFAULT NULL,
+  `limite_por_dia` int DEFAULT NULL,
+  `tempo_maximo` time DEFAULT NULL,
+  `horario_abertura` time DEFAULT NULL,
+  `horario_fechamento` time DEFAULT NULL,
   PRIMARY KEY (`idLocal`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -39,7 +42,7 @@ CREATE TABLE `local` (
 
 LOCK TABLES `local` WRITE;
 /*!40000 ALTER TABLE `local` DISABLE KEYS */;
-INSERT INTO `local` VALUES (1,'Quadra CEEP','quadra',20,'83501320',415),(2,'Buzatao','centro esportivo',250,'84128422',13),(3,'Quadra Central','Quadra Poliesportiva',200,'80000000',10),(4,'Ginásio Municipal','Ginásio',500,'80001000',25),(5,'Campo de Futebol Vila Nova','Campo de Futebol',1000,'80002000',50),(6,'Parque das Águas','Parque',300,'80003000',100),(7,'Piscina Pública Centro','Piscina',150,'80004000',5),(8,'Auditório Cultural','Auditório',250,'80005000',12),(9,'Sala de Eventos Jardim Europa','Sala de Eventos',100,'80006000',8),(10,'Pista de Skate','Pista de Esportes',50,'80007000',7),(11,'Centro de Convivência','Espaço Multiuso',200,'80008000',20),(12,'Quadra de Areia','Quadra de Vôlei',100,'80009000',15);
+INSERT INTO `local` VALUES (1,'Quadra CEEP','quadra','83501320',415,2,'02:00:00','08:00:00','18:00:00'),(2,'Buzatao','centro esportivo','84128422',13,1,'01:00:00','08:00:00','18:00:00'),(3,'Quadra Central','Quadra Poliesportiva','80000000',10,4,'03:00:00','09:00:00','19:00:00'),(4,'Ginásio Municipal','Ginásio','80001000',25,2,'02:00:00','07:00:00','17:00:00'),(5,'Campo de Futebol Vila Nova','Campo de Futebol','80002000',50,1,'02:00:00','10:00:00','20:00:00'),(6,'Parque das Águas','Parque','80003000',100,2,'01:00:00','06:00:00','22:00:00'),(7,'Piscina Pública Centro','Piscina','80004000',5,2,'02:00:00','11:00:00','21:00:00'),(8,'Auditório Cultural','Auditório','80005000',12,3,'02:00:00','08:00:00','18:00:00'),(9,'Sala de Eventos Jardim Europa','Sala de Eventos','80006000',8,1,'03:00:00','07:00:00','19:00:00'),(10,'Pista de Skate','Pista de Esportes','80007000',7,5,'02:00:00','12:00:00','23:00:00'),(11,'Centro de Convivência','Espaço Multiuso','80008000',20,10,'01:00:00','05:00:00','15:00:00'),(12,'Quadra de Areia','Quadra de Vôlei','80009000',15,2,'02:00:00','09:00:00','19:00:00');
 /*!40000 ALTER TABLE `local` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -52,4 +55,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-15 22:13:48
+-- Dump completed on 2024-12-23 11:31:07

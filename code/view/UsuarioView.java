@@ -1,151 +1,76 @@
 package view;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.text.ParseException;
 import java.util.regex.Pattern;
 import java.sql.SQLException;
 import java.sql.ResultSet;
-import java.util.Scanner;
 import java.sql.Time;
+import java.util.Scanner;
 
-import controller.UsuarioController;
+import controller.LocalController;
 import model.UsuarioModel;
+import model.LocalModel;
 import model.ReservaModel;
 
-public class UsuarioView {
+public class UsuarioView implements IView {
 
+    // Constantes para validação de entrada
     private static final String PADRAO_EMAIL = "^[a-zA-Z0-9._%+-]+@gmail\\.com$";
     private static final String PADRAO_TELEFONE = "^\\(\\d{2}\\) 9\\d{4}-\\d{4}$";
 
+    // ================================
+    // Métodos de Cadastro e Login
+    // ================================
+
     public void cadastrar(Scanner scanner, UsuarioModel usuario) {
-        do {
-            System.out.print("Cpf: ");
-            usuario.setCpf(scanner.nextLine());
-        } while (!validarCpfUsuario(usuario));
+
+        usuario.setCpf(validarCpfUsuario(scanner));
 
         usuario.setNome(lerNomeUsuario(scanner));
 
-        usuario.setEmail(lerEntradaComValidacaoRegex(scanner, "Email (user@gmail.com): ", PADRAO_EMAIL,
+        usuario.setEmail(lerEntradaComValidacaoRegex(scanner, "Email (EX: user@gmail.com): ", PADRAO_EMAIL,
                 "O email inserido não é válido. Tente novamente!"));
 
-        System.out.print("Senha: ");
-        usuario.setSenha(scanner.nextLine());
+        usuario.setSenha(lerSenhaUsuario(scanner));
 
-        usuario.setTelefone(lerEntradaComValidacaoRegex(scanner, "Telefone ((xx) 9xxxx-xxxx): ", PADRAO_TELEFONE,
+        usuario.setTelefone(lerEntradaComValidacaoRegex(scanner, "Telefone (EX: (xx) 9xxxx-xxxx: ) ", PADRAO_TELEFONE,
                 "O telefone inserido não segue o padrão. Tente novamente!"));
     }
 
     public void logar(Scanner scanner, UsuarioModel usuario) {
+        System.out.print("Insira seu email: ");
         usuario.setEmail(scanner.nextLine());
+        System.out.print("Insira sua Senha: ");
         usuario.setSenha(scanner.nextLine());
     }
 
-    public void logSuccess(ResultSet rs, UsuarioModel model) throws SQLException {
-        model.setCpf(rs.getString("cpf"));
-        model.setNome(rs.getString("nome"));
-        model.setRua(rs.getString("rua"));
-        model.setBairro(rs.getString("bairro"));
-        model.setCidade(rs.getString("cidade"));
-        model.setCep(rs.getInt("cep"));
-        model.setEstado(rs.getString("estado"));
-        model.setNumero(rs.getInt("numero"));
-    }
-
-    public boolean exibirTelaInicial(UsuarioModel model, Scanner scanner, UsuarioController controller) {
-        int opcao;
-        exibirMenuInicial();
-        opcao = lerOpcaoDoUsuario(scanner);
-
-        if (opcao != 6) {
-            return (executarOpcaoTelaInicial(scanner, controller, model, opcao));
-        } else {
-            return false;
+    // ================================
+    // Métodos de Reserva
+    // ================================
+    public void listarReservas(ResultSet rs) throws SQLException {
+        String line = "-------------------------------------------------------------------";
+        System.out.println(line);
+        System.out.printf("| %-5s | %-10s | %-8s | %-8s | %-10s | %-5s |%n", "ID", "Data", "Inicio",
+                "Fim", "Status", "IdLocal");
+        System.out.println(line);
+        while (rs.next()) {
+            System.out.printf("| %-5s | %-10s | %-8s | %-8s | %-10s | %-7s |%n",
+                    rs.getInt("idreserva"),
+                    rs.getDate("data"),
+                    rs.getTime("horario_inicio"),
+                    rs.getTime("horario_fim"),
+                    rs.getString("status"),
+                    rs.getInt("idLocal"));
         }
-    }
-
-    public void exibirMenuPrincipal(UsuarioModel model, Scanner scanner, UsuarioController controller) {
-        int opcao;
-        do {
-            exibirMenuPrincipal();
-            opcao = lerOpcaoDoUsuario(scanner);
-
-            if (opcao != 6) {
-                executarOpcaoMenuPrincipal(scanner, controller, model, opcao);
-            }
-        } while (opcao != 6);
-    }
-
-    private void exibirMenuInicial() {
-        System.out.println("\n--- Menu Usuario ---");
-        System.out.println("1. Cadastrar");
-        System.out.println("2. Logar");
-        System.out.println("3. Sair");
-        System.out.print("Escolha uma opção: ");
-    }
-
-    private void exibirMenuPrincipal() {
-        System.out.println("\n--- Menu Usuario ---");
-        System.out.println("1. Fazer reserva");
-        System.out.println("2. Listar Reservas");
-        System.out.println("3. Cancelar Reserva");
-        System.out.println("4. Informações pessoais");
-        System.out.println("5. Alterar informações");
-        System.out.println("6. Sair");
-        System.out.print("Escolha uma opção: ");
-    }
-
-    private int lerOpcaoDoUsuario(Scanner scanner) {
-        if (scanner.hasNextInt()) {
-            return scanner.nextInt();
-        } else {
-            System.out.println("Entrada inválida! Por favor, insira um número.");
-            scanner.nextLine();
-            return 0;
-        }
-    }
-
-    private boolean executarOpcaoTelaInicial(Scanner scanner, UsuarioController controller, UsuarioModel model,
-            int opcao) {
-        boolean logado = false;
-        switch (opcao) {
-            case 1:
-                controller.cadastrar(scanner);
-                break;
-            case 2:
-                logado = controller.logar(scanner);
-                break;
-            default:
-                System.out.println("Opção inválida! Tente novamente.");
-                break;
-        }
-        return logado;
-    }
-
-    private void executarOpcaoMenuPrincipal(Scanner scanner, UsuarioController controller, UsuarioModel model,
-            int opcao) {
-        switch (opcao) {
-            case 1:
-                controller.fazerReserva(scanner);
-                break;
-            case 2:
-                controller.listarReservas(scanner);
-                break;
-            case 3:
-                controller.cancelarReserva(scanner);
-                break;
-            case 4:
-                controller.exibirInfo();
-                break;
-            case 5:
-                controller.atualizarInfo(scanner);
-                break;
-            default:
-                System.out.println("Opção inválida! Tente novamente.");
-                break;
-        }
+        System.out.println(line);
     }
 
     public void fazerReserva(Scanner scanner, ReservaModel reserva) {
+        LocalController localController = new LocalController();
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
 
@@ -157,12 +82,54 @@ public class UsuarioView {
         reserva.setIdLocal(scanner.nextInt());
         scanner.nextLine();
 
+        LocalModel localModel = localController.infoLocal(reserva.getIdLocal());
+
         reserva.setData(obterData(scanner, dateFormat, currentDate));
 
-        reserva.setHorario(obterHorario(scanner, timeFormat, currentDate, currentTime));
+        localController.listarHorariosDisponiveis(reserva.getIdLocal(), reserva.getData());
+
+        reserva.setHorarioInicio(obterHorario(scanner, timeFormat, currentDate, currentTime).toLocalTime());
+
+        reserva.setHorarioFim(calcularHorarioFim(scanner, localModel, reserva));
 
         reserva.setStatus("PENDENTE");
     }
+
+    private LocalTime calcularHorarioFim(Scanner scanner, LocalModel localModel, ReservaModel reserva) {
+        LocalTime horarioFim;
+
+        if (localModel.getTempoMaximo().getHour() > 1) {
+            System.out.println("Quanto tempo deseja reservar?");
+            System.out.println("Este local permite reserva até " + localModel.getTempoMaximo() + " horas.");
+
+            String horarioInput = scanner.nextLine();
+            LocalTime duracao = obterDuracao(horarioInput);
+
+            horarioFim = reserva.getHorarioInicio().plusHours(duracao.getHour()).plusMinutes(duracao.getMinute());
+        } else {
+
+            horarioFim = reserva.getHorarioInicio().plusHours(1);
+        }
+
+        return horarioFim;
+    }
+
+    private LocalTime obterDuracao(String horarioInput) {
+        LocalTime duracao = null;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        try {
+            duracao = LocalTime.parse(horarioInput, formatter);
+        } catch (DateTimeParseException e) {
+            System.out.println("Formato inválido. Por favor, insira a duração no formato HH:mm.");
+        }
+
+        return duracao != null ? duracao : LocalTime.of(1, 0);
+    }
+
+    // ================================
+    // Métodos Utilitários
+    // ================================
 
     private java.sql.Date obterData(Scanner scanner, SimpleDateFormat dateFormat, java.sql.Date currentDate) {
         java.sql.Date sqlDate;
@@ -206,18 +173,6 @@ public class UsuarioView {
         return horario;
     }
 
-    public void listarReservas(ResultSet rs) throws SQLException {
-        System.out.printf("| %-5s | %-10s | %-8s | %-10s | %-5s |%n", "ID", "Data", "Horario", "Status", "IdLocal");
-        while (rs.next()) {
-            System.out.printf("| %-5s | %-10s | %-8s | %-10s | %-7s |%n",
-                    rs.getInt("idreserva"),
-                    rs.getDate("data"),
-                    rs.getTime("horario"),
-                    rs.getString("status"),
-                    rs.getInt("idLocal"));
-        }
-    }
-
     private String lerEntradaComValidacaoRegex(Scanner scanner, String mensagem, String padrao, String erro) {
         String entrada;
         while (true) {
@@ -235,31 +190,53 @@ public class UsuarioView {
         while (true) {
             System.out.print("Nome: ");
             nome = scanner.nextLine();
-            if (nome.length() > 3 && !nome.matches(".*\\d.*")) {
+            if ((nome.length()) > 3 && (!nome.matches(".*[^a-zA-Z ]+.*"))) {
                 break;
             }
-            System.out.println("Nome inválido, tente novamente!");
+            System.out
+                    .println("Nome inválido, tente novamente! O nome não pode conter números ou caracteres especiais.");
         }
         return nome;
     }
 
-    public boolean validarCpfUsuario(UsuarioModel model) {
-        String cpf = model.getCpf();
-        if (cpf == null || cpf.length() != 11 || !cpf.matches("\\d{11}")) {
-            System.out.println("Este Cpf é inválido, tente novamente!");
-            return false;
+    private String lerSenhaUsuario(Scanner scanner) {
+        String senha;
+        while (true) {
+            System.out.print("Senha: ");
+            senha = scanner.nextLine();
+
+            if (senha.contains(" ")) {
+                System.out.println("A senha não pode conter espaços. Tente novamente!");
+                continue;
+            }
+
+            if (senha.length() >= 8) {
+                break;
+            } else {
+                System.out.println("Senha muito curta, tente novamente!");
+            }
         }
-        if (cpf.chars().distinct().count() == 1) {
-            System.out.println("Este Cpf é inválido, tente novamente!");
-            return false;
+        return senha;
+    }
+
+    public String validarCpfUsuario(Scanner scanner) {
+        while (true) {
+            System.out.print("CPF (11 dígitos): ");
+            String cpf = scanner.nextLine();
+            if (cpf == null || cpf.length() != 11 || !cpf.matches("\\d{11}")) {
+                System.out.println("Este Cpf é inválido, tente novamente!");
+            } else if (cpf.chars().distinct().count() == 1) {
+                System.out.println("Este Cpf é inválido, tente novamente!");
+            } else {
+                int fDigit = calcularDigitoVerificadorCpf(cpf, 10, 9);
+                int sDigit = calcularDigitoVerificadorCpf(cpf, 11, 10);
+                if (!(fDigit == (cpf.charAt(9) - '0') && sDigit == (cpf.charAt(10) - '0'))) {
+                    System.out.println("Este Cpf é inválido, tente novamente!");
+                } else {
+                    return cpf;
+                }
+            }
         }
-        int fDigit = calcularDigitoVerificadorCpf(cpf, 10, 9);
-        int sDigit = calcularDigitoVerificadorCpf(cpf, 11, 10);
-        if (!(fDigit == (cpf.charAt(9) - '0') && sDigit == (cpf.charAt(10) - '0'))) {
-            System.out.println("Este Cpf é inválido, tente novamente!");
-            return false;
-        }
-        return true;
     }
 
     private int calcularDigitoVerificadorCpf(String cpf, int pesoInicial, int tamanho) {
@@ -280,5 +257,30 @@ public class UsuarioView {
             return false;
         }
         return true;
+    }
+
+    // ================================
+    // Menus de Navegação
+    // ================================
+
+    @Override
+    public void exibirMenuInicial() {
+        System.out.println("\n--- Menu Usuario ---");
+        System.out.println("1. Cadastrar");
+        System.out.println("2. Logar");
+        System.out.println("3. Sair");
+        System.out.print("Escolha uma opção: ");
+    }
+
+    @Override
+    public void exibirMenuPrincipal() {
+        System.out.println("\n--- Menu Usuario ---");
+        System.out.println("1. Fazer reserva");
+        System.out.println("2. Listar Reservas");
+        System.out.println("3. Cancelar Reserva");
+        System.out.println("4. Informações pessoais");
+        System.out.println("5. Alterar informações");
+        System.out.println("6. Sair");
+        System.out.print("Escolha uma opção: ");
     }
 }
