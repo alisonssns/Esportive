@@ -12,23 +12,31 @@ public class LocalView {
 
     public LocalModel local;
 
-    public void cadastrar(Scanner scanner, LocalModel local) {
+    public void cadastrar(Scanner scanner, LocalModel local, ArrayList<Object> values) {
         System.out.print("Nome: ");
         local.setNome(scanner.nextLine());
+        values.add(local.getNome());
         System.out.print("Cep: ");
         local.setCep(scanner.nextLine());
+        values.add(local.getCep());
         System.out.print("Tipo: ");
         local.setTipo(scanner.nextLine());
+        values.add(local.getTipo());
         System.out.print("Numero: ");
         local.setNumero(scanner.nextInt());
+        values.add(local.getNumero());
         System.out.print("Limites de reservas por dia (por usuário): ");
         local.setNumero(scanner.nextInt());
+        values.add(local.getNumero());
         System.out.print("Tempo máximo de uma reserva (em horas): ");
         local.setNumero(scanner.nextInt());
+        values.add(local.getNumero());
         System.out.print("Horario de abertura: ");
         local.setNumero(scanner.nextInt());
+        values.add(local.getNumero());
         System.out.print("Horario de fechamento: ");
         local.setNumero(scanner.nextInt());
+        values.add(local.getNumero());
     }
 
     public void listar(ResultSet rs) throws SQLException {

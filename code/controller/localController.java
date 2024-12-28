@@ -2,58 +2,49 @@ package controller;
 
 import model.LocalModel;
 import view.LocalView;
+import utils.CRUD;
 
 import java.sql.*;
 import java.time.LocalTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class LocalController {
     private LocalView view = new LocalView();
     private LocalModel model = new LocalModel();
+    private CRUD crud = new CRUD();
 
     // Método principal para cadastrar um local
     public void cadastrar(Scanner scanner) {
-        view.cadastrar(scanner, model);
+        ArrayList<Object> values = new ArrayList<>();
+        view.cadastrar(scanner, model, values);
         String sql = "INSERT INTO local (nome, tipo, cep, numero, limite_por_dia, tempo_maximo, horario_abertura, horario_funcionamento) VALUES (?,?,?,?,?,?,?,?)";
-
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            setCadastrarLocalParams(stmt);
-            stmt.executeUpdate();
+        
+        try {
+            crud.insert(sql, values);
         } catch (SQLException e) {
             System.out.println("Erro ao cadastrar: " + e.getMessage());
         }
     }
 
-    private void setCadastrarLocalParams(PreparedStatement stmt) throws SQLException {
-        stmt.setString(1, model.getNome());
-        stmt.setString(2, model.getTipo());
-        stmt.setString(3, model.getCep());
-        stmt.setInt(4, model.getNumero());
-        stmt.setInt(5, model.getLimiteDia());
-        stmt.setTime(6, Time.valueOf(model.getTempoMaximo()));
-        stmt.setTime(7, Time.valueOf(model.getHorarioAbertura()));
-        stmt.setTime(8, Time.valueOf(model.getHorarioFechamento()));
-    }
-
-    // Método para listar todos os locais
+    // Método para ArrayListar todos os locais
     public void listar() {
         String sql = "SELECT * FROM local";
         try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery()) {
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
             view.listar(rs);
         } catch (SQLException e) {
             System.out.println("Erro: " + e.getMessage());
         }
     }
 
-    // Método para listar um local específico por id
+    // Método para ArrayListar um local específico por id
     public void listarReservas(int idLocal) {
         String sql = "SELECT * FROM reserva WHERE idLocal = ?";
         try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, idLocal);
             try (ResultSet rs = stmt.executeQuery()) {
                 view.listar(rs);
@@ -70,9 +61,7 @@ public class LocalController {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setInt(1, idLocal);
-            
             try (ResultSet rs = stmt.executeQuery()) {
-                // Verifica se há resultados no ResultSet
                 if (rs.next()) {
                     localModel.setNome(rs.getString("nome"));
                     localModel.setTipo(rs.getString("tipo"));
@@ -92,17 +81,16 @@ public class LocalController {
         
         return localModel;
     }
-    
 
-    // Método para listar as reservas do dia
-    public ArrayList<LocalTime> listarReservasDia(int idLocal, Date data) {
+    // Método para ArrayListar as reservas do dia
+    public ArrayList<LocalTime> listarReservasDia(int idLocal, LocalDate data) {
         ArrayList<LocalTime> horariosReservados = new ArrayList<>();
         String sql = "SELECT horario_inicio, horario_fim FROM reserva WHERE idLocal = ? AND data = ?";
 
         try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, idLocal);
-            stmt.setDate(2, data);
+            stmt.setDate(2, java.sql.Date.valueOf(data)); // Conversão correta para java.sql.Date
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     LocalTime horarioInicio = rs.getTime("horario_inicio").toLocalTime();
@@ -125,18 +113,18 @@ public class LocalController {
         return horarios;
     }
 
-    public void listarHorariosDisponiveis(int idLocal, Date data) {
+    public void listarHorariosDisponiveis(int idLocal, LocalDate data) {
         ArrayList<LocalTime> horariosReservados = listarReservasDia(idLocal, data);
         String sql = "SELECT horario_abertura, horario_fechamento FROM local WHERE idLocal = ?";
 
         try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, idLocal);
             try (ResultSet rs = stmt.executeQuery()) {
                 view.exibirHorariosDisponiveis(horariosReservados, rs);
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao listar horários disponíveis: " + e.getMessage());
+            System.err.println("Erro ao ArrayListar horários disponíveis: " + e.getMessage());
         }
     }
 }

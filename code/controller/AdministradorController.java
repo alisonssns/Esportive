@@ -5,20 +5,25 @@ import model.ReservaModel;
 import model.UsuarioModel;
 import view.AdministradorView;
 import view.UsuarioView;
+import utils.AdmUtils;
+import utils.CRUD;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class AdministradorController implements IUserAdmController {
-    private AdministradorView view = new AdministradorView();
-    private AdministradorModel model = new AdministradorModel();
-    private LocalController localController = new LocalController();
     private UsuarioController usuarioController = new UsuarioController();
-    private final ReservaModel modelReserva = new ReservaModel();
+    private LocalController localController = new LocalController();
+    private final ReservaModel reservaModel = new ReservaModel();
+    private AdministradorModel model = new AdministradorModel();
+    private AdministradorView view = new AdministradorView();
+    private AdmUtils utils = new AdmUtils();
+    private CRUD crud = new CRUD();
 
     public void iniciar(Scanner scanner) {
         boolean logado = false;
@@ -33,97 +38,74 @@ public class AdministradorController implements IUserAdmController {
 
     @Override
     public void cadastrar(Scanner scanner) {
-        // Lógica de cadastro de um novo usuário
-        System.out.println("Cadastro de novo usuário: ");
-        System.out.print("Digite o nome: ");
-        String nome = scanner.nextLine();
-        System.out.print("Digite o CPF: ");
-        String cpf = scanner.nextLine();
-        System.out.print("Digite o email: ");
-        String email = scanner.nextLine();
-        System.out.print("Digite a senha: ");
-        String senha = scanner.nextLine();
-
-        String sql = "INSERT INTO usuario (nome, cpf, email, senha, status) VALUES (?, ?, ?, ?, ?)";
-
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, nome);
-            stmt.setString(2, cpf);
-            stmt.setString(3, email);
-            stmt.setString(4, senha);
-            stmt.setString(5, "Ativo");
-
-            int rowsInserted = stmt.executeUpdate();
-            if (rowsInserted > 0) {
-                System.out.println("Novo usuário cadastrado com sucesso!");
-            }
-        } catch (SQLException e) {
-            System.out.println("Erro ao cadastrar usuário: " + e.getMessage());
-        }
+        usuarioController.cadastrar(scanner);
     }
 
     @Override
     public boolean logar(Scanner scanner) {
-        // Lógica de login de administrador
-        System.out.println("Digite seu Email: ");
-        String email = scanner.nextLine();
-        System.out.println("Digite sua senha: ");
-        String senha = scanner.nextLine();
+        ArrayList<Object> values = new ArrayList<>();
 
-        String sql = "SELECT * FROM usuario WHERE email = ? AND senha = ? and tipo = 'admin'";
+        view.logar(scanner, model);
+        utils.logar(model, values);
 
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, email);
-            stmt.setString(2, senha);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    System.out.println("Login realizado com sucesso!");
-                    return true;
-                } else {
-                    System.out.println("Credenciais inválidas.");
-                    return false;
-                }
+        String query = "SELECT * FROM usuario WHERE email = ? AND senha = ? AND tipo = 'cli'";
+
+        try (ResultSet rsUsuario = crud.select(query, values)) {
+            if (rsUsuario.next()) {
+                System.out.println("Seja bem-vindo: " + rsUsuario.getString("nome"));
+                addTelefone();
+                loginSuccess(rsUsuario);
+                return true;
+            } else {
+                System.out.println("Usuário não encontrado.");
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao realizar login: " + e.getMessage());
-            return false;
+            System.out.println("Erro ao logar: " + e.getMessage());
+        }
+
+        return false;
+    }
+
+    private void loginSuccess(ResultSet rsUsuario) throws SQLException {
+        model.setCpf(rsUsuario.getString("cpf"));
+        model.setNome(rsUsuario.getString("nome"));
+        model.setEmail(rsUsuario.getString("email"));
+        model.setSenha(rsUsuario.getString("senha"));
+    }
+
+    private void addTelefone() {
+        ArrayList<Object> values = new ArrayList<>();
+        values.add(model.getCpf());
+
+        String query = "SELECT numero FROM telefoneusuario WHERE cpfUsuario = ?";
+
+        try (ResultSet rsUsuario = crud.select(query, values)) {
+            if (rsUsuario.next()) {
+                model.setTelefone(rsUsuario.getString("numero"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao procurar telefone: " + e.getMessage());
         }
     }
 
     @Override
     public void fazerReserva(Scanner scanner) {
         UsuarioView userView = new UsuarioView();
-        // Listar locais disponíveis
+        ArrayList<Object> values = new ArrayList<>();
+
         listarUsuarios();
         localController.listar();
 
-        // Solicitar o CPF do usuário para fazer a reserva
         System.out.println("Digite o CPF do usuário para o qual deseja fazer a reserva: ");
         String cpfUsuario = scanner.nextLine();
 
-        // Obter a data, horário e local da reserva
-        userView.fazerReserva(scanner, modelReserva);
+        userView.fazerReserva(scanner, reservaModel);
+        utils.fazerReserva(cpfUsuario, reservaModel, values);
 
-        // Preparar a SQL para inserir a reserva
-        String sql = "INSERT INTO reserva (cpfUsuario, data, horario_inicio, horario_fim, status, idLocal) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO reserva (cpfUsuario, data, horario_inicio, horario_fim, status, idLocal, data_registro, hora_registro) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            // Setar os parâmetros para a SQL
-            stmt.setString(1, cpfUsuario); // Usar o CPF do usuário fornecido pelo administrador
-            stmt.setDate(2, modelReserva.getData());
-            stmt.setTime(3, Time.valueOf(modelReserva.getHorarioInicio()));
-            stmt.setTime(4, Time.valueOf(modelReserva.getHorarioFim()));
-            stmt.setString(5, modelReserva.getStatus());
-            stmt.setInt(6, modelReserva.getIdLocal());
-
-            // Executar a SQL para inserir a reserva
-            stmt.executeUpdate();
-
-            System.out.println("Reserva realizada com sucesso para o usuário: " + cpfUsuario);
-
+        try {
+            crud.insert(query, values);
         } catch (SQLException e) {
             System.out.println("Erro ao realizar a reserva: " + e.getMessage());
         }
@@ -237,8 +219,6 @@ public class AdministradorController implements IUserAdmController {
         }
     }
 
-    // Método para atualizar informações de um usuário
-
     private UsuarioModel buscarUsuarioPorCpf(String cpf, UsuarioModel usuario) {
         String buscarSql = "SELECT * FROM usuario WHERE cpf = ?";
 
@@ -258,7 +238,6 @@ public class AdministradorController implements IUserAdmController {
         return usuario;
     }
 
-    // Método para listar todos os usuários
     public void listarUsuarios() {
         String sql = "SELECT * FROM usuario";
         try (Connection conn = Conector.getConnection();
@@ -270,7 +249,6 @@ public class AdministradorController implements IUserAdmController {
         }
     }
 
-    // Método para bloquear um usuário
     public void bloquearUsuario(Scanner scanner) {
         listarUsuarios();
         System.out.println("Digite o CPF do usuário que deseja bloquear: ");

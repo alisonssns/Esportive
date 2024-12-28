@@ -2,13 +2,15 @@ package controller;
 
 import model.ReservaModel;
 import model.UsuarioModel;
+import utils.CRUD;
+import utils.UserUtils;
 import view.UsuarioView;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Time;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class UsuarioController implements IUserAdmController {
@@ -16,97 +18,66 @@ public class UsuarioController implements IUserAdmController {
     private final UsuarioModel model = new UsuarioModel();
     private final LocalController localController = new LocalController();
     private final ReservaModel modelReserva = new ReservaModel();
+    private final CRUD crud = new CRUD();
+    private final UserUtils utils = new UserUtils();
 
     public void iniciar(Scanner scanner) {
-    boolean logado = false;
-    boolean sair = false;
+        boolean logado = false;
+        boolean sair = false;
 
-    while (!sair) {
-        if (!logado) {
-            logado = exibirTelaInicial(scanner);
-        } else {
-            logado = exibirMenuPrincipal(scanner);
+        while (!sair) {
+            if (!logado) {
+                logado = exibirTelaInicial(scanner);
+            } else {
+                logado = exibirMenuPrincipal(scanner);
+            }
         }
     }
-}
 
     @Override
     public void cadastrar(Scanner scanner) {
+        ArrayList<Object> values = new ArrayList<>();
         view.cadastrar(scanner, model);
 
-        String sqlUsuario = "INSERT INTO usuario (cpf, nome, email, senha, tipo) VALUES (?, ?, ?, ?, ?)";
-        String sqlTelefone = "INSERT INTO telefoneusuario (numero, cpfUsuario) VALUES (?, ?)";
+        String query = "INSERT INTO usuario (cpf, nome, email, senha, tipo) VALUES (?, ?, ?, ?, ?)";
+        String queryT = "INSERT INTO telefoneusuario (numero, cpfUsuario) VALUES (?, ?)";
 
-        try (Connection conn = Conector.getConnection()) {
-            conn.setAutoCommit(false);
+        utils.cadastrar(model, values);
 
-            try (PreparedStatement stmt = conn.prepareStatement(sqlUsuario)) {
-                stmt.setString(1, model.getCpf());
-                stmt.setString(2, model.getNome());
-                stmt.setString(3, model.getEmail());
-                stmt.setString(4, model.getSenha());
-                stmt.setString(5, "cli");
-                stmt.executeUpdate();
-            }
-
-            try (PreparedStatement tstmt = conn.prepareStatement(sqlTelefone)) {
-                tstmt.setString(1, model.getTelefone());
-                tstmt.setString(2, model.getCpf());
-                tstmt.executeUpdate();
-            }
-
-            conn.commit();
-            System.out.println("Cadastro realizado com sucesso!");
-
+        try {
+            crud.insert(query, values);
+            utils.cadastrarTelefone(model, values);
+            crud.insert(queryT, values);
         } catch (SQLException e) {
-            System.out.println("Erro ao cadastrar: " + e.getMessage());
-            try (Connection conn = Conector.getConnection()) {
-                conn.rollback();
-                System.out.println("Transação revertida.");
-            } catch (SQLException rollbackEx) {
-                System.out.println("Erro ao reverter a transação: " + rollbackEx.getMessage());
-            }
+            System.err.println("Erro ao executar a consulta: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            System.out.println("Usuário cadastrado com sucesso!");
         }
     }
 
     @Override
     public boolean logar(Scanner scanner) {
+        ArrayList<Object> values = new ArrayList<>();
+
         view.logar(scanner, model);
+        utils.logar(model, values);
+        
+        String query = "SELECT * FROM usuario WHERE email = ? AND senha = ? AND tipo = 'cli'";
 
-        String sqlUsuario = "SELECT * FROM usuario WHERE email = ? AND senha = ?";
-        String sqlTelefone = "SELECT numero FROM telefoneusuario WHERE cpfUsuario = ?";
-
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmtUsuario = conn.prepareStatement(sqlUsuario)) {
-
-            stmtUsuario.setString(1, model.getEmail());
-            stmtUsuario.setString(2, model.getSenha());
-
-            try (ResultSet rsUsuario = stmtUsuario.executeQuery()) {
-                if (rsUsuario.next() && "cli".equals(rsUsuario.getString("tipo"))) {
-                    try (PreparedStatement stmtTelefone = conn.prepareStatement(sqlTelefone)) {
-                        stmtTelefone.setString(1, rsUsuario.getString("cpf"));
-
-                        try (ResultSet rsTelefone = stmtTelefone.executeQuery()) {
-                            if (rsTelefone.next()) {
-                                System.out.println(rsTelefone.getString("numero"));
-                                model.setTelefone(rsTelefone.getString("numero"));
-                            }
-                        }
-                    }
-
-                    System.out.println();
-                    System.out.println("Seja bem-vindo: " + rsUsuario.getString("nome"));
-                    loginSuccess(rsUsuario);
-                    return true;
-
-                } else {
-                    System.out.println("Usuário não encontrado.");
-                }
+        try (ResultSet rsUsuario = crud.select(query, values)) {
+            if (rsUsuario.next()) {
+                System.out.println("Seja bem-vindo: " + rsUsuario.getString("nome"));
+                addTelefone();
+                loginSuccess(rsUsuario);
+                return true;
+            } else {
+                System.out.println("Usuário não encontrado.");
             }
         } catch (SQLException e) {
             System.out.println("Erro ao logar: " + e.getMessage());
         }
+
         return false;
     }
 
@@ -117,40 +88,59 @@ public class UsuarioController implements IUserAdmController {
         model.setSenha(rsUsuario.getString("senha"));
     }
 
+    private void addTelefone() {
+        ArrayList<Object> values = new ArrayList<>();
+        values.add(model.getCpf());
+
+        String query = "SELECT numero FROM telefoneusuario WHERE cpfUsuario = ?";
+
+        try (ResultSet rsUsuario = crud.select(query, values)) {
+            if (rsUsuario.next()) {
+                model.setTelefone(rsUsuario.getString("numero"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao procurar telefone: " + e.getMessage());
+        }
+    }
+
     @Override
     public void fazerReserva(Scanner scanner) {
+        ArrayList<Object> values = new ArrayList<>();
         localController.listar();
+
         view.fazerReserva(scanner, modelReserva);
+        utils.fazerReserva(model.getCpf(), modelReserva, values);
 
-        String sql = "INSERT INTO reserva (cpfUsuario, data, horario_inicio, horario_fim, status, idLocal) VALUES (?, ?, ?, ?, ?,?)";
+        String query = "INSERT INTO reserva (cpfUsuario, data, horario_inicio, horario_fim, status, idLocal, data_registro, hora_registro) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, model.getCpf());
-            stmt.setDate(2, modelReserva.getData());
-            stmt.setTime(3, Time.valueOf(modelReserva.getHorarioInicio()));
-            stmt.setTime(4, Time.valueOf(modelReserva.getHorarioFim()));
-            stmt.setString(5, modelReserva.getStatus());
-            stmt.setInt(6, modelReserva.getIdLocal());
-            stmt.executeUpdate();
-
-            System.out.println("Reserva realizada com sucesso!");
-
+        try {
+            crud.insert(query, values);
         } catch (SQLException e) {
             System.out.println("Erro ao realizar a reserva: " + e.getMessage());
         }
     }
 
     public void listarReservas(String cpf) {
-        String sql = "SELECT * FROM reserva WHERE cpfUsuario = ?";
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, cpf);
-            try (ResultSet rs = stmt.executeQuery()) {
+        ArrayList<Object> values = new ArrayList<>();
+        String query = "SELECT * FROM reserva WHERE cpfUsuario = ?";
+        values.add(cpf);
+
+        ResultSet rs = null;
+        try {
+            rs = crud.select(query, values);
+            if (rs != null) {
                 view.listarReservas(rs);
             }
         } catch (SQLException e) {
+            System.err.println("Erro ao executar a consulta: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null)
+                    rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -229,6 +219,7 @@ public class UsuarioController implements IUserAdmController {
             System.out.println("Erro ao atualizar informações: " + e.getMessage());
         }
     }
+
     @Override
     public boolean exibirTelaInicial(Scanner scanner) {
         int opcao;
@@ -244,6 +235,7 @@ public class UsuarioController implements IUserAdmController {
             return false;
         }
     }
+
     @Override
     public boolean exibirMenuPrincipal(Scanner scanner) {
         int opcao;
@@ -256,7 +248,7 @@ public class UsuarioController implements IUserAdmController {
         } while (opcao != 6);
         return false;
     }
-    
+
     private int lerOpcaoDoUsuario(Scanner scanner) {
         if (scanner.hasNextInt()) {
             return scanner.nextInt();
@@ -266,7 +258,7 @@ public class UsuarioController implements IUserAdmController {
             return 0;
         }
     }
-    
+
     private boolean executarOpcaoTelaInicial(Scanner scanner,
             int opcao) {
         boolean logado = false;
@@ -283,7 +275,7 @@ public class UsuarioController implements IUserAdmController {
         }
         return logado;
     }
-    
+
     private void executarOpcaoMenuPrincipal(Scanner scanner, int opcao) {
         switch (opcao) {
             case 1:

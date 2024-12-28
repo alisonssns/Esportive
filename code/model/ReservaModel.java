@@ -1,10 +1,10 @@
 package model;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 public class ReservaModel {
-    private Date data;
+    private LocalDate data;
     private LocalTime horarioInicio;
     private LocalTime horarioFim;
     private int idLocal;
@@ -18,11 +18,11 @@ public class ReservaModel {
         this.idLocal = idLocal;
     }
 
-    public Date getData() {
+    public LocalDate getData() {
         return data;
     }
 
-    public void setData(Date data) {
+    public void setData(LocalDate data) {
         this.data = data;
     }
 

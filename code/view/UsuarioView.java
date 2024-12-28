@@ -1,61 +1,160 @@
 package view;
 
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.text.ParseException;
-import java.util.regex.Pattern;
-import java.sql.SQLException;
-import java.sql.ResultSet;
-import java.sql.Time;
+import java.util.ArrayList;
 import java.util.Scanner;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import controller.LocalController;
-import model.UsuarioModel;
+
 import model.LocalModel;
 import model.ReservaModel;
+import model.UsuarioModel;
+import utils.ReservaUtils;
+import validation.ReservaValidation;
+import validation.UserValidation;
 
 public class UsuarioView implements IView {
+    ReservaValidation reservaValidator = new ReservaValidation();
+    UserValidation usuarioValidator = new UserValidation();
+    ReservaUtils reservaUtils = new ReservaUtils();
 
-    // Constantes para validação de entrada
-    private static final String PADRAO_EMAIL = "^[a-zA-Z0-9._%+-]+@gmail\\.com$";
-    private static final String PADRAO_TELEFONE = "^\\(\\d{2}\\) 9\\d{4}-\\d{4}$";
+    public void cadastrar(Scanner scanner, UsuarioModel model) {
+        model.setCpf(lerCpf(scanner));
 
-    // ================================
-    // Métodos de Cadastro e Login
-    // ================================
+        model.setNome(lerNome(scanner));
 
-    public void cadastrar(Scanner scanner, UsuarioModel usuario) {
+        model.setEmail(lerEmail(scanner));
 
-        usuario.setCpf(validarCpfUsuario(scanner));
+        model.setSenha(lerSenha(scanner));
 
-        usuario.setNome(lerNomeUsuario(scanner));
-
-        usuario.setEmail(lerEntradaComValidacaoRegex(scanner, "Email (EX: user@gmail.com): ", PADRAO_EMAIL,
-                "O email inserido não é válido. Tente novamente!"));
-
-        usuario.setSenha(lerSenhaUsuario(scanner));
-
-        usuario.setTelefone(lerEntradaComValidacaoRegex(scanner, "Telefone (EX: (xx) 9xxxx-xxxx: ) ", PADRAO_TELEFONE,
-                "O telefone inserido não segue o padrão. Tente novamente!"));
+        model.setTelefone(lerTelefone(scanner));
     }
 
-    public void logar(Scanner scanner, UsuarioModel usuario) {
-        System.out.print("Insira seu email: ");
-        usuario.setEmail(scanner.nextLine());
-        System.out.print("Insira sua Senha: ");
-        usuario.setSenha(scanner.nextLine());
+    public void logar(Scanner scanner, UsuarioModel model){
+        System.out.print("Email: ");
+        model.setEmail(scanner.nextLine());
+
+        System.out.print("Senha: ");
+        model.setSenha(scanner.nextLine());
     }
 
-    // ================================
-    // Métodos de Reserva
-    // ================================
+    public String lerCpf(Scanner scanner) {
+        String cpf;
+        do {
+            System.out.print("CPF (11 dígitos): ");
+            cpf = scanner.nextLine();
+        } while (!usuarioValidator.validarCpf(cpf));
+        return cpf;
+    }
+
+    public String lerNome(Scanner scanner) {
+        String nome;
+        do {
+            System.out.print("Nome: ");
+            nome = scanner.nextLine();
+        } while (!usuarioValidator.validarNome(nome));
+        return nome;
+    }
+
+    public String lerSenha(Scanner scanner) {
+        String senha;
+        do {
+            System.out.print("Senha: ");
+            senha = scanner.nextLine();
+        } while (!usuarioValidator.validarSenha(senha));
+        return senha;
+    }
+
+    public String lerEmail(Scanner scanner) {
+        final String PADRAO_EMAIL = "^[a-zA-Z0-9._%+-]+@gmail\\.com$";
+        String email;
+        do {
+            System.out.print("Email (Ex: user@gmail.com): ");
+            email = scanner.nextLine();
+        } while (!usuarioValidator.validarEmail(email, PADRAO_EMAIL));
+        return email;
+    }
+    
+    public String lerTelefone(Scanner scanner) {
+        final String PADRAO_TELEFONE = "^\\d{2} \\d{5}\\-\\d{4}$";
+        String telefone;
+        do {
+            System.out.print("Telefone (Ex: 41 99999-9999): ");
+            telefone = scanner.nextLine();
+        } while (!usuarioValidator.validarTelefone(telefone, PADRAO_TELEFONE));
+        return telefone;
+    }
+
+    public void fazerReserva(Scanner scanner, ReservaModel reserva) {
+        LocalController localController = new LocalController();
+
+        System.out.print("Qual o local gostaria de fazer a reserva? Escolha pelo ID:");
+        reserva.setIdLocal(scanner.nextInt());
+        scanner.nextLine();
+
+        LocalModel localModel = localController.infoLocal(reserva.getIdLocal());
+
+        reserva.setData(obterData(scanner));
+
+        localController.listarHorariosDisponiveis(reserva.getIdLocal(), reserva.getData());
+
+        reserva.setHorarioInicio(obterHorario(scanner));
+
+        reserva.setHorarioFim(obterDuracao(localModel, scanner, reserva));
+
+        reserva.setStatus("PENDENTE");
+    }
+
+    private LocalTime obterHorario(Scanner scanner) {
+        String horarioInput;
+        do {
+            System.out.print("Escolha o horário da reserva (HH:mm): ");
+            horarioInput = scanner.nextLine();
+        } while (!reservaValidator.validarHorario(horarioInput));
+
+        return LocalTime.parse(horarioInput);
+    }
+
+    public LocalTime obterDuracao(LocalModel localModel, Scanner scanner, ReservaModel reserva) {
+        String horarioInput;
+
+        if (localModel.getTempoMaximo().getHour() > 1) {
+            System.out.println("Este local permite reserva até " + localModel.getTempoMaximo() + " horas.");
+            
+            do {
+                System.out.println("Quanto tempo deseja reservar? (formato HH:mm): ");
+                horarioInput = scanner.nextLine();
+            } while (!reservaValidator.validarHorario(horarioInput));
+
+        } else {
+            horarioInput = localModel.getTempoMaximo().toString();
+        }
+
+        return reservaValidator.calcularHorarioFim(reserva, horarioInput);
+    }
+
+    public LocalDate obterData(Scanner scanner) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        String dataInput;
+        
+        do {
+            System.out.print("Escolha uma data para sua reserva (dd-MM-yyyy): ");
+            dataInput = scanner.nextLine();
+        } while (!reservaValidator.validarData(scanner, LocalDate.now(), dataInput, formatter));
+        
+        LocalDate data = LocalDate.parse(dataInput, formatter);
+        return data;
+    }
+
     public void listarReservas(ResultSet rs) throws SQLException {
         String line = "-------------------------------------------------------------------";
         System.out.println(line);
-        System.out.printf("| %-5s | %-10s | %-8s | %-8s | %-10s | %-5s |%n", "ID", "Data", "Inicio",
-                "Fim", "Status", "IdLocal");
+        System.out.printf("| %-5s | %-10s | %-8s | %-8s | %-10s | %-5s |%n", "ID", "Data", "Inicio", "Fim", "Status",
+                "IdLocal");
         System.out.println(line);
         while (rs.next()) {
             System.out.printf("| %-5s | %-10s | %-8s | %-8s | %-10s | %-7s |%n",
@@ -68,200 +167,6 @@ public class UsuarioView implements IView {
         }
         System.out.println(line);
     }
-
-    public void fazerReserva(Scanner scanner, ReservaModel reserva) {
-        LocalController localController = new LocalController();
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-
-        java.util.Date now = new java.util.Date();
-        java.sql.Date currentDate = new java.sql.Date(now.getTime());
-        Time currentTime = new Time(now.getTime());
-
-        System.out.println("Qual o local gostaria de fazer a reserva? Escolha pelo ID:");
-        reserva.setIdLocal(scanner.nextInt());
-        scanner.nextLine();
-
-        LocalModel localModel = localController.infoLocal(reserva.getIdLocal());
-
-        reserva.setData(obterData(scanner, dateFormat, currentDate));
-
-        localController.listarHorariosDisponiveis(reserva.getIdLocal(), reserva.getData());
-
-        reserva.setHorarioInicio(obterHorario(scanner, timeFormat, currentDate, currentTime).toLocalTime());
-
-        reserva.setHorarioFim(calcularHorarioFim(scanner, localModel, reserva));
-
-        reserva.setStatus("PENDENTE");
-    }
-
-    private LocalTime calcularHorarioFim(Scanner scanner, LocalModel localModel, ReservaModel reserva) {
-        LocalTime horarioFim;
-
-        if (localModel.getTempoMaximo().getHour() > 1) {
-            System.out.println("Quanto tempo deseja reservar?");
-            System.out.println("Este local permite reserva até " + localModel.getTempoMaximo() + " horas.");
-
-            String horarioInput = scanner.nextLine();
-            LocalTime duracao = obterDuracao(horarioInput);
-
-            horarioFim = reserva.getHorarioInicio().plusHours(duracao.getHour()).plusMinutes(duracao.getMinute());
-        } else {
-
-            horarioFim = reserva.getHorarioInicio().plusHours(1);
-        }
-
-        return horarioFim;
-    }
-
-    private LocalTime obterDuracao(String horarioInput) {
-        LocalTime duracao = null;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-
-        try {
-            duracao = LocalTime.parse(horarioInput, formatter);
-        } catch (DateTimeParseException e) {
-            System.out.println("Formato inválido. Por favor, insira a duração no formato HH:mm.");
-        }
-
-        return duracao != null ? duracao : LocalTime.of(1, 0);
-    }
-
-    // ================================
-    // Métodos Utilitários
-    // ================================
-
-    private java.sql.Date obterData(Scanner scanner, SimpleDateFormat dateFormat, java.sql.Date currentDate) {
-        java.sql.Date sqlDate;
-        while (true) {
-            try {
-                System.out.print("Escolha uma data para sua reserva (dd-MM-yyyy): ");
-                String dataInput = scanner.nextLine();
-                java.util.Date utilDate = dateFormat.parse(dataInput);
-                sqlDate = new java.sql.Date(utilDate.getTime());
-
-                if (sqlDate.before(currentDate)) {
-                    System.out.println("A data não pode ser anterior à data atual. Tente novamente.");
-                    continue;
-                }
-                break;
-            } catch (ParseException e) {
-                System.out.println("Formato de data inválido. Tente novamente.");
-            }
-        }
-        return sqlDate;
-    }
-
-    private Time obterHorario(Scanner scanner, SimpleDateFormat timeFormat, java.sql.Date currentDate,
-            Time currentTime) {
-        Time horario;
-        while (true) {
-            try {
-                System.out.print("Escolha o horário da reserva (HH:mm): ");
-                String horarioInput = scanner.nextLine();
-                horario = new Time(timeFormat.parse(horarioInput).getTime());
-
-                if (horario.before(currentTime) && currentDate.equals(new java.sql.Date(System.currentTimeMillis()))) {
-                    System.out.println("O horário não pode ser anterior ao horário atual. Tente novamente.");
-                    continue;
-                }
-                break;
-            } catch (ParseException e) {
-                System.out.println("Formato de horário inválido. Tente novamente.");
-            }
-        }
-        return horario;
-    }
-
-    private String lerEntradaComValidacaoRegex(Scanner scanner, String mensagem, String padrao, String erro) {
-        String entrada;
-        while (true) {
-            System.out.print(mensagem);
-            entrada = scanner.nextLine();
-            if (Pattern.matches(padrao, entrada)) {
-                return entrada;
-            }
-            System.out.println(erro);
-        }
-    }
-
-    private String lerNomeUsuario(Scanner scanner) {
-        String nome;
-        while (true) {
-            System.out.print("Nome: ");
-            nome = scanner.nextLine();
-            if ((nome.length()) > 3 && (!nome.matches(".*[^a-zA-Z ]+.*"))) {
-                break;
-            }
-            System.out
-                    .println("Nome inválido, tente novamente! O nome não pode conter números ou caracteres especiais.");
-        }
-        return nome;
-    }
-
-    private String lerSenhaUsuario(Scanner scanner) {
-        String senha;
-        while (true) {
-            System.out.print("Senha: ");
-            senha = scanner.nextLine();
-
-            if (senha.contains(" ")) {
-                System.out.println("A senha não pode conter espaços. Tente novamente!");
-                continue;
-            }
-
-            if (senha.length() >= 8) {
-                break;
-            } else {
-                System.out.println("Senha muito curta, tente novamente!");
-            }
-        }
-        return senha;
-    }
-
-    public String validarCpfUsuario(Scanner scanner) {
-        while (true) {
-            System.out.print("CPF (11 dígitos): ");
-            String cpf = scanner.nextLine();
-            if (cpf == null || cpf.length() != 11 || !cpf.matches("\\d{11}")) {
-                System.out.println("Este Cpf é inválido, tente novamente!");
-            } else if (cpf.chars().distinct().count() == 1) {
-                System.out.println("Este Cpf é inválido, tente novamente!");
-            } else {
-                int fDigit = calcularDigitoVerificadorCpf(cpf, 10, 9);
-                int sDigit = calcularDigitoVerificadorCpf(cpf, 11, 10);
-                if (!(fDigit == (cpf.charAt(9) - '0') && sDigit == (cpf.charAt(10) - '0'))) {
-                    System.out.println("Este Cpf é inválido, tente novamente!");
-                } else {
-                    return cpf;
-                }
-            }
-        }
-    }
-
-    private int calcularDigitoVerificadorCpf(String cpf, int pesoInicial, int tamanho) {
-        int soma = 0;
-
-        for (int i = 0; i < tamanho; i++) {
-            soma += (cpf.charAt(i) - '0') * pesoInicial;
-            pesoInicial--;
-        }
-
-        int resto = 11 - (soma % 11);
-        return (resto >= 10) ? 0 : resto;
-    }
-
-    public boolean validarSenhaUsuario(String senha) {
-        if (senha == null || senha.length() < 8) {
-            System.out.println("A senha deve ter pelo menos 8 caracteres. Tente novamente.");
-            return false;
-        }
-        return true;
-    }
-
-    // ================================
-    // Menus de Navegação
-    // ================================
 
     @Override
     public void exibirMenuInicial() {

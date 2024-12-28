@@ -4,8 +4,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
+import model.AdministradorModel;
+
 public class AdministradorView implements IView {
     Scanner scanner = new Scanner(System.in);
+
+    public void logar(Scanner scanner, AdministradorModel model){
+        System.out.print("Email: ");
+        model.setEmail(scanner.nextLine());
+
+        System.out.print("Senha: ");
+        model.setSenha(scanner.nextLine());
+    }
 
     @Override
     public void exibirMenuInicial() {
