@@ -60,6 +60,27 @@ public class LocalView {
         System.out.println(line);
     }
 
+    public void listarReservas(ResultSet rs) throws SQLException {
+        String line = "--------------------------------------------------------------------------------------------------";
+        String padrao = "| %-5s | %-10s | %-8s | %-8s | %-9s | %-12s | %-9s | %-12s |%n";
+
+        System.out.println(line);
+        System.out.printf(padrao,
+                "ID", "Data", "Inicio", "Fim", "Status", "DataRegistro", "ID local",
+                "CPF User");
+
+        System.out.println(line);
+
+        while (rs.next()) {
+            System.out.printf(padrao,
+                    rs.getInt("idReserva"), rs.getDate("data"), rs.getTime("horario_inicio"),
+                    rs.getTime("horario_fim"), rs.getString("status"), rs.getDate("data_registro"),
+                    rs.getInt("idLocal"), rs.getString("cpfUsuario"));
+        }
+
+        System.out.println(line);
+    }
+
     public void exibirHorariosDisponiveis(ArrayList<LocalTime> horariosReservados, ResultSet rs) {
         try {
             System.out.println("Horários disponíveis para o local no dia:");

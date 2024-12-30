@@ -1,19 +1,16 @@
 package controller;
 
 import model.AdministradorModel;
+import view.AdministradorView;
 import model.ReservaModel;
 import model.UsuarioModel;
-import view.AdministradorView;
 import view.UsuarioView;
 import utils.AdmUtils;
 import utils.CRUD;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Time;
 import java.util.ArrayList;
+import java.sql.ResultSet;
 import java.util.Scanner;
 
 public class AdministradorController implements IUserAdmController {
@@ -27,12 +24,9 @@ public class AdministradorController implements IUserAdmController {
 
     public void iniciar(Scanner scanner) {
         boolean logado = false;
+
         while (true) {
-            if (!logado) {
-                logado = exibirTelaInicial(scanner);
-            } else {
-                logado = exibirMenuPrincipal(scanner);
-            }
+            logado = logado ? exibirMenuPrincipal(scanner) : exibirTelaInicial(scanner);
         }
     }
 
@@ -48,7 +42,7 @@ public class AdministradorController implements IUserAdmController {
         view.logar(scanner, model);
         utils.logar(model, values);
 
-        String query = "SELECT * FROM usuario WHERE email = ? AND senha = ? AND tipo = 'cli'";
+        String query = "SELECT * FROM usuario WHERE email = ? AND senha = ? AND tipo = 'admin'";
 
         try (ResultSet rsUsuario = crud.select(query, values)) {
             if (rsUsuario.next()) {
@@ -112,7 +106,7 @@ public class AdministradorController implements IUserAdmController {
     }
 
     public void listarReservas(Scanner scanner) {
-        int opcao = view.listarReservas();
+        int opcao = view.listarReservas(scanner);
         if (opcao == 1) {
             listarUsuarios();
             System.out.println("Digite o CPF do usuario para listar as reservas: ");
@@ -129,44 +123,24 @@ public class AdministradorController implements IUserAdmController {
     @Override
     public void cancelarReserva(Scanner scanner, String cpf) {
         listarReservas(scanner);
-        System.out.println("Digite o ID da reserva que deseja cancelar: ");
-        int idReserva = scanner.nextInt();
+        ArrayList<Object> values = new ArrayList<>();
+        int idreserva = view.getId(scanner);
 
-        String sql = "DELETE FROM reserva WHERE idreserva = ? AND cpfUsuario = ?";
+        values.add(idreserva);
+        values.add(cpf);
 
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+        String query = "UPDATE reserva SET status = 'Cancelada' WHERE idreserva = ? and cpfusuario = ?";
 
-            stmt.setInt(1, idReserva);
-            stmt.setString(2, model.getCpf());
-            int rowsAffected = stmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                System.out.println("Reserva cancelada com sucesso!");
-            } else {
-                System.out.println("Reserva não encontrada ou não pertence ao usuário.");
-            }
+        try {
+            crud.update(query, values);
         } catch (SQLException e) {
-            System.out.println("Erro ao cancelar reserva: " + e.getMessage());
+            System.out.println("Erro ao cancelar a reserva: " + e.getMessage());
         }
     }
 
     @Override
     public void exibirInfo() {
-        System.out.printf("CPF:           %s%n", model.getCpf());
-        System.out.printf("Nome:          %s%n", model.getNome());
-        System.out.printf("E-mail:        %s%n", model.getEmail());
-        System.out.printf("Senha:         %s%n", model.getSenha());
-        System.out.println("------------------------------------");
-        System.out.printf("Rua:           %s%n", model.getRua());
-        System.out.printf("Bairro:        %s%n", model.getBairro());
-        System.out.printf("Cidade:        %s%n", model.getCidade());
-        System.out.printf("CEP:           %s%n", model.getCep());
-        System.out.printf("Estado:        %s%n", model.getEstado());
-        System.out.printf("Número:        %s%n", model.getNumero());
-        System.out.println("------------------------------------");
-        System.out.printf("Telefone:      %s%n", model.getTelefone());
-        System.out.println("====================================");
+        view.exibirInfo(model);
     }
 
     @Override
@@ -175,10 +149,9 @@ public class AdministradorController implements IUserAdmController {
         System.out.println("Digite o CPF do usuário que deseja alterar informações: ");
         String cpf = scanner.nextLine();
 
-        UsuarioModel usuario = new UsuarioModel();
-        buscarUsuarioPorCpf(cpf, usuario);
+        UsuarioModel usuario = buscarUsuarioPorCpf(cpf);
 
-        if (!usuario.getNome().isEmpty()) {
+        if (usuario != null) {
             System.out.println("Digite o novo nome (ou pressione Enter para manter o atual): ");
             String novoNome = scanner.nextLine();
             System.out.println("Digite o novo e-mail (ou pressione Enter para manter o atual): ");
@@ -194,58 +167,52 @@ public class AdministradorController implements IUserAdmController {
 
     private void atualizarUsuario(UsuarioModel usuario, String cpf, String novoNome, String novoEmail,
             String novaSenha) {
+        ArrayList<Object> values = new ArrayList<>();
         String nomeFinal = (novoNome != null && !novoNome.isEmpty()) ? novoNome : usuario.getNome();
         String emailFinal = (novoEmail != null && !novoEmail.isEmpty()) ? novoEmail : usuario.getEmail();
         String senhaFinal = (novaSenha != null && !novaSenha.isEmpty()) ? novaSenha : usuario.getSenha();
+        values.add(nomeFinal);
+        values.add(emailFinal);
+        values.add(senhaFinal);
+        values.add(cpf);
 
-        String atualizarSql = "UPDATE usuario SET nome = ?, email = ?, senha = ? WHERE cpf = ?";
+        String query = "UPDATE usuario SET nome = ?, email = ?, senha = ? WHERE cpf = ?";
 
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement atualizarStmt = conn.prepareStatement(atualizarSql)) {
-            atualizarStmt.setString(1, nomeFinal);
-            atualizarStmt.setString(2, emailFinal);
-            atualizarStmt.setString(3, senhaFinal);
-            atualizarStmt.setString(4, cpf);
-
-            int rowsUpdated = atualizarStmt.executeUpdate();
-            if (rowsUpdated > 0) {
-                System.out.println("Usuário atualizado com sucesso!");
-            } else {
-                System.out.println("Nenhum usuário encontrado com o CPF informado.");
-            }
-
+        try {
+            crud.update(query, values);
         } catch (SQLException e) {
-            System.out.println("Erro ao atualizar usuário: " + e.getMessage());
+            System.out.println("Erro ao alterar usuario: " + e.getMessage());
         }
     }
 
-    private UsuarioModel buscarUsuarioPorCpf(String cpf, UsuarioModel usuario) {
-        String buscarSql = "SELECT * FROM usuario WHERE cpf = ?";
+    private UsuarioModel buscarUsuarioPorCpf(String cpf) {
+        ArrayList<Object> values = new ArrayList<>();
+        values.add(cpf);
 
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement buscarStmt = conn.prepareStatement(buscarSql)) {
-            buscarStmt.setString(1, cpf);
-            try (ResultSet rs = buscarStmt.executeQuery()) {
-                if (rs.next()) {
-                    usuario.setNome(rs.getString("nome"));
-                    usuario.setEmail(rs.getString("email"));
-                    usuario.setSenha(rs.getString("senha"));
-                }
+        String query = "SELECT * FROM usuario WHERE cpf = ?";
+        UsuarioModel usuario = new UsuarioModel();
+
+        try (ResultSet rs = crud.select(query, values)) {
+            if (rs.next()) {
+                usuario.setNome(rs.getString("nome"));
+                usuario.setEmail(rs.getString("email"));
+                usuario.setSenha(rs.getString("senha"));
+                return usuario;
             }
         } catch (SQLException e) {
             System.out.println("Erro ao buscar usuário: " + e.getMessage());
         }
-        return usuario;
+        return null;
     }
 
     public void listarUsuarios() {
-        String sql = "SELECT * FROM usuario";
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery()) {
+        String query = "SELECT * FROM usuario";
+        ArrayList<Object> values = new ArrayList<>();
+
+        try (ResultSet rs = crud.select(query, values)) {
             view.listar(rs);
         } catch (SQLException e) {
-            System.out.println("Erro ao listar usuários: " + e.getMessage());
+            System.out.println("Erro ao listar usuarios: " + e.getMessage());
         }
     }
 
@@ -253,20 +220,21 @@ public class AdministradorController implements IUserAdmController {
         listarUsuarios();
         System.out.println("Digite o CPF do usuário que deseja bloquear: ");
         String cpf = scanner.nextLine();
-        String sql = "UPDATE usuario SET status = ? WHERE cpf = ?";
 
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, "Bloqueado");
-            stmt.setString(2, cpf);
-            int rowsUpdated = stmt.executeUpdate();
+        ArrayList<Object> values = new ArrayList<>();
+        values.add(cpf);
+
+        String sql = "UPDATE usuario SET status = 'Bloqueado' WHERE cpf = ?";
+
+        try {
+            int rowsUpdated = crud.update(sql, values);
             if (rowsUpdated > 0) {
                 System.out.println("Usuário bloqueado com sucesso!");
             } else {
                 System.out.println("Nenhum usuário encontrado com o CPF informado.");
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao bloquear usuário: " + e.getMessage());
+            System.out.println("Erro ao realizar a reserva: " + e.getMessage());
         }
     }
 

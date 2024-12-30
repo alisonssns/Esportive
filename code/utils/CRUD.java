@@ -10,50 +10,45 @@ import controller.Conector;
 
 public class CRUD {
 
-    // Método para SELECT
     public ResultSet select(String query, ArrayList<Object> values) throws SQLException {
         Connection conn = Conector.getConnection();
         PreparedStatement stmt = conn.prepareStatement(query);
 
         setStatementValues(stmt, values);
 
-        return stmt.executeQuery(); // O ResultSet permanece aberto
+        return stmt.executeQuery();
     }
 
-    // Método para INSERT
     public int insert(String query, ArrayList<Object> values) throws SQLException {
         try (Connection conn = Conector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
 
             setStatementValues(stmt, values);
 
-            return stmt.executeUpdate(); // Retorna o número de linhas afetadas
+            return stmt.executeUpdate();
         }
     }
 
-    // Método para UPDATE
     public int update(String query, ArrayList<Object> values) throws SQLException {
         try (Connection conn = Conector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
 
             setStatementValues(stmt, values);
 
-            return stmt.executeUpdate(); // Retorna o número de linhas afetadas
+            return stmt.executeUpdate();
         }
     }
 
-    // Método para DELETE
     public int delete(String query, ArrayList<Object> values) throws SQLException {
         try (Connection conn = Conector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
 
             setStatementValues(stmt, values);
 
-            return stmt.executeUpdate(); // Retorna o número de linhas afetadas
+            return stmt.executeUpdate();
         }
     }
 
-    // Método auxiliar para definir os valores no PreparedStatement
     private void setStatementValues(PreparedStatement stmt, ArrayList<Object> values) throws SQLException {
         for (int i = 0; i < values.size(); i++) {
             Object value = values.get(i);
@@ -81,20 +76,22 @@ public class CRUD {
         }
     }
 
-    // Método para fechar ResultSet, Statement e Connection manualmente (boas práticas)
     public void closeResources(ResultSet rs, PreparedStatement stmt, Connection conn) {
         try {
-            if (rs != null) rs.close();
+            if (rs != null)
+                rs.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
         try {
-            if (stmt != null) stmt.close();
+            if (stmt != null)
+                stmt.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
         try {
-            if (conn != null) conn.close();
+            if (conn != null)
+                conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }

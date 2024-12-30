@@ -6,7 +6,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
-import model.LocalModel;
 import model.ReservaModel;
 
 public class ReservaValidation {
@@ -22,10 +21,10 @@ public class ReservaValidation {
         return duracao != null ? true : false;
     }
 
-    public boolean validarData(Scanner scanner, LocalDate currentDate, String dataStr, DateTimeFormatter formatter) {    
+    public boolean validarData(Scanner scanner, LocalDate currentDate, String dataStr, DateTimeFormatter formatter) {
         try {
             LocalDate data = LocalDate.parse(dataStr, formatter);
-    
+
             if (data.isBefore(currentDate)) {
                 System.out.println("A data não pode ser anterior à data atual. Tente novamente.");
                 return false;
@@ -38,7 +37,7 @@ public class ReservaValidation {
         }
     }
 
-     public LocalTime calcularHorarioFim(ReservaModel model, String duracao) {
+    public LocalTime calcularHorarioFim(ReservaModel model, String duracao) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         LocalTime duracaoTime = LocalTime.parse(duracao, formatter);
 
@@ -46,5 +45,5 @@ public class ReservaValidation {
         LocalTime fim = inicio.plusHours(duracaoTime.getHour()).plusMinutes(duracaoTime.getMinute());
 
         return fim;
-    }    
+    }
 }

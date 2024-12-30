@@ -2,41 +2,35 @@ package controller;
 
 import model.ReservaModel;
 import model.UsuarioModel;
-import utils.CRUD;
-import utils.UserUtils;
 import view.UsuarioView;
+import utils.UserUtils;
+import utils.CRUD;
 
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class UsuarioController implements IUserAdmController {
-    private final UsuarioView view = new UsuarioView();
-    private final UsuarioModel model = new UsuarioModel();
     private final LocalController localController = new LocalController();
     private final ReservaModel modelReserva = new ReservaModel();
-    private final CRUD crud = new CRUD();
+    private final UsuarioModel model = new UsuarioModel();
+    private final UsuarioView view = new UsuarioView();
     private final UserUtils utils = new UserUtils();
+    private final CRUD crud = new CRUD();
+    private final ArrayList<Object> values = new ArrayList<>();
 
     public void iniciar(Scanner scanner) {
         boolean logado = false;
-        boolean sair = false;
 
-        while (!sair) {
-            if (!logado) {
-                logado = exibirTelaInicial(scanner);
-            } else {
-                logado = exibirMenuPrincipal(scanner);
-            }
+        while (true) {
+            logado = logado ? exibirMenuPrincipal(scanner) : exibirTelaInicial(scanner);
         }
     }
 
     @Override
     public void cadastrar(Scanner scanner) {
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
         view.cadastrar(scanner, model);
 
         String query = "INSERT INTO usuario (cpf, nome, email, senha, tipo) VALUES (?, ?, ?, ?, ?)";
@@ -46,7 +40,7 @@ public class UsuarioController implements IUserAdmController {
 
         try {
             crud.insert(query, values);
-            utils.cadastrarTelefone(model, values);
+            utils.telefone(model, values);
             crud.insert(queryT, values);
         } catch (SQLException e) {
             System.err.println("Erro ao executar a consulta: " + e.getMessage());
@@ -58,11 +52,10 @@ public class UsuarioController implements IUserAdmController {
 
     @Override
     public boolean logar(Scanner scanner) {
-        ArrayList<Object> values = new ArrayList<>();
-
+        values.clear();
         view.logar(scanner, model);
         utils.logar(model, values);
-        
+
         String query = "SELECT * FROM usuario WHERE email = ? AND senha = ? AND tipo = 'cli'";
 
         try (ResultSet rsUsuario = crud.select(query, values)) {
@@ -89,7 +82,7 @@ public class UsuarioController implements IUserAdmController {
     }
 
     private void addTelefone() {
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
         values.add(model.getCpf());
 
         String query = "SELECT numero FROM telefoneusuario WHERE cpfUsuario = ?";
@@ -105,7 +98,7 @@ public class UsuarioController implements IUserAdmController {
 
     @Override
     public void fazerReserva(Scanner scanner) {
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
         localController.listar();
 
         view.fazerReserva(scanner, modelReserva);
@@ -121,7 +114,7 @@ public class UsuarioController implements IUserAdmController {
     }
 
     public void listarReservas(String cpf) {
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
         String query = "SELECT * FROM reserva WHERE cpfUsuario = ?";
         values.add(cpf);
 
@@ -134,89 +127,54 @@ public class UsuarioController implements IUserAdmController {
         } catch (SQLException e) {
             System.err.println("Erro ao executar a consulta: " + e.getMessage());
             e.printStackTrace();
-        } finally {
-            try {
-                if (rs != null)
-                    rs.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     @Override
     public void cancelarReserva(Scanner scanner, String cpf) {
+        values.clear();
         listarReservas(cpf);
-        System.out.println("Digite o ID da reserva que deseja cancelar: ");
-        int idReserva = scanner.nextInt();
+        int idreserva = view.getId(scanner);
 
-        String sql = "DELETE FROM reserva WHERE idreserva = ? AND cpfUsuario = ?";
+        values.add(idreserva);
+        values.add(cpf);
 
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+        String query = "UPDATE reserva SET status = 'Cancelada' WHERE idreserva = ? and cpfusuario = ?";
 
-            stmt.setInt(1, idReserva);
-            stmt.setString(2, model.getCpf());
-            int rowsAffected = stmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                System.out.println("Reserva cancelada com sucesso!");
-            } else {
-                System.out.println("Reserva não encontrada ou não pertence ao usuário.");
-            }
+        try {
+            crud.update(query, values);
         } catch (SQLException e) {
-            System.out.println("Erro ao cancelar reserva: " + e.getMessage());
+            System.out.println("Erro ao cancelar a reserva: " + e.getMessage());
         }
     }
 
     @Override
     public void exibirInfo() {
-        System.out.printf("CPF:           %s%n", model.getCpf());
-        System.out.printf("Nome:          %s%n", model.getNome());
-        System.out.printf("E-mail:        %s%n", model.getEmail());
-        System.out.printf("Senha:         %s%n", model.getSenha());
-        System.out.println("------------------------------------");
-        System.out.printf("Rua:           %s%n", model.getRua());
-        System.out.printf("Bairro:        %s%n", model.getBairro());
-        System.out.printf("Cidade:        %s%n", model.getCidade());
-        System.out.printf("CEP:           %s%n", model.getCep());
-        System.out.printf("Estado:        %s%n", model.getEstado());
-        System.out.printf("Número:        %s%n", model.getNumero());
-        System.out.println("------------------------------------");
-        System.out.printf("Telefone:      %s%n", model.getTelefone());
-        System.out.println("====================================");
+        view.exibirInfo(model);
     }
 
     @Override
     public void atualizarInfo(Scanner scanner) {
-        System.out.println("Digite o novo nome: ");
-        String novoNome = scanner.nextLine();
-        System.out.println("Digite o novo e-mail: ");
-        String novoEmail = scanner.nextLine();
-        System.out.println("Digite a nova senha: ");
-        String novaSenha = scanner.nextLine();
+        values.clear();
+        
+        view.atualizarInfo(model, scanner);
+        utils.atualizarInfo(model, values);
 
-        String sql = "UPDATE usuario SET nome = ?, email = ?, senha = ? WHERE cpf = ?";
+        String query = "UPDATE usuario SET nome = ?, email = ?, senha = ? WHERE cpf = ?";
+        String queryT = "UPDATE telefoneusuario SET numero = ? WHERE cpfUsuario = ?";
 
-        try (Connection conn = Conector.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, novoNome);
-            stmt.setString(2, novoEmail);
-            stmt.setString(3, novaSenha);
-            stmt.setString(4, model.getCpf());
-            int rowsAffected = stmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                model.setNome(novoNome);
-                model.setEmail(novoEmail);
-                model.setSenha(novaSenha);
-                System.out.println("Informações atualizadas com sucesso!");
-            } else {
-                System.out.println("Erro ao atualizar informações. Usuário não encontrado.");
-            }
+        try {
+            crud.update(query, values);
         } catch (SQLException e) {
-            System.out.println("Erro ao atualizar informações: " + e.getMessage());
+            System.out.println("Erro ao Atualizar Info: " + e.getMessage());
+        }
+
+        utils.telefone(model, values);
+
+        try {
+            crud.update(queryT, values);
+        } catch (SQLException e) {
+            System.out.println("Erro ao atualizar Telefone: " + e.getMessage());
         }
     }
 

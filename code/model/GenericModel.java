@@ -1,4 +1,4 @@
-package model; // Pacote onde a classe está localizada
+package model; 
 
 public class GenericModel {
     private String Cpf;

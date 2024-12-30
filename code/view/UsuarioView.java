@@ -3,7 +3,6 @@ package view;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Scanner;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,12 +33,18 @@ public class UsuarioView implements IView {
         model.setTelefone(lerTelefone(scanner));
     }
 
-    public void logar(Scanner scanner, UsuarioModel model){
+    public void logar(Scanner scanner, UsuarioModel model) {
         System.out.print("Email: ");
         model.setEmail(scanner.nextLine());
 
         System.out.print("Senha: ");
         model.setSenha(scanner.nextLine());
+    }
+
+    public int getId(Scanner scanner) {
+        System.out.println("Digite o ID da reserva que deseja cancelar: ");
+        int id = scanner.nextInt();
+        return id;
     }
 
     public String lerCpf(Scanner scanner) {
@@ -78,7 +83,7 @@ public class UsuarioView implements IView {
         } while (!usuarioValidator.validarEmail(email, PADRAO_EMAIL));
         return email;
     }
-    
+
     public String lerTelefone(Scanner scanner) {
         final String PADRAO_TELEFONE = "^\\d{2} \\d{5}\\-\\d{4}$";
         String telefone;
@@ -124,7 +129,7 @@ public class UsuarioView implements IView {
 
         if (localModel.getTempoMaximo().getHour() > 1) {
             System.out.println("Este local permite reserva até " + localModel.getTempoMaximo() + " horas.");
-            
+
             do {
                 System.out.println("Quanto tempo deseja reservar? (formato HH:mm): ");
                 horarioInput = scanner.nextLine();
@@ -140,12 +145,12 @@ public class UsuarioView implements IView {
     public LocalDate obterData(Scanner scanner) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         String dataInput;
-        
+
         do {
             System.out.print("Escolha uma data para sua reserva (dd-MM-yyyy): ");
             dataInput = scanner.nextLine();
         } while (!reservaValidator.validarData(scanner, LocalDate.now(), dataInput, formatter));
-        
+
         LocalDate data = LocalDate.parse(dataInput, formatter);
         return data;
     }
@@ -166,6 +171,56 @@ public class UsuarioView implements IView {
                     rs.getInt("idLocal"));
         }
         System.out.println(line);
+    }
+
+    public void atualizarInfo(UsuarioModel model, Scanner scanner) {
+        System.out.println("Qual informação você deseja atulizar?");
+        System.out.println("1. Nome");
+        System.out.println("2. E-mail");
+        System.out.println("3. Senha");
+        System.out.println("4. Telefone");
+        int opcao = scanner.nextInt();
+
+        try {
+            opcao = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Entrada inválida. Digite um número entre 1 e 4.");
+            return;
+        }
+
+        switch (opcao) {
+            case 1:
+                model.setNome(lerNome(scanner));
+                break;
+            case 2:
+                model.setEmail(lerEmail(scanner));
+                break;
+            case 3:
+                model.setSenha(lerSenha(scanner));
+                break;
+            case 4:
+                model.setTelefone(lerTelefone(scanner));
+                break;
+            default:
+                System.out.println("Opção invalida");
+        }
+    }
+
+    public void exibirInfo(UsuarioModel model) {
+        System.out.printf("CPF:           %s%n", model.getCpf());
+        System.out.printf("Nome:          %s%n", model.getNome());
+        System.out.printf("E-mail:        %s%n", model.getEmail());
+        System.out.printf("Senha:         %s%n", model.getSenha());
+        System.out.println("------------------------------------");
+        System.out.printf("Rua:           %s%n", model.getRua());
+        System.out.printf("Bairro:        %s%n", model.getBairro());
+        System.out.printf("Cidade:        %s%n", model.getCidade());
+        System.out.printf("CEP:           %s%n", model.getCep());
+        System.out.printf("Estado:        %s%n", model.getEstado());
+        System.out.printf("Número:        %s%n", model.getNumero());
+        System.out.println("------------------------------------");
+        System.out.printf("Telefone:      %s%n", model.getTelefone());
+        System.out.println("====================================");
     }
 
     @Override

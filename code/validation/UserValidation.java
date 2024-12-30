@@ -1,20 +1,21 @@
 package validation;
+
 import java.util.regex.Pattern;
 
 public class UserValidation {
 
     public boolean validarCpf(String cpf) {
         if (cpf == null || cpf.length() != 11 || !cpf.matches("\\d{11}")) {
-            System.out.println("Este Cpf é inválido, tente novamente!");
+            System.out.println("CPF inválido! O CPF deve conter exatamente 11 dígitos numéricos. Verifique e tente novamente.");
             return false;
         } else if (cpf.chars().distinct().count() == 1) {
-            System.out.println("Este Cpf é inválido, tente novamente!");
+            System.out.println("CPF inválido! O CPF não pode conter todos os dígitos iguais. Verifique e tente novamente.");
             return false;
         } else {
             int fDigit = calcularDigitoVerificadorCpf(cpf, 10, 9);
             int sDigit = calcularDigitoVerificadorCpf(cpf, 11, 10);
             if (!(fDigit == (cpf.charAt(9) - '0') && sDigit == (cpf.charAt(10) - '0'))) {
-                System.out.println("Este Cpf é inválido, tente novamente!");
+                System.out.println("CPF inválido! O CPF fornecido não é válido. Verifique os números e tente novamente.");
                 return false;
             } else {
                 return true;
@@ -36,8 +37,7 @@ public class UserValidation {
         if (nome.length() > 3 && nome.matches("[a-zA-Z ]+")) {
             return true;
         } else {
-            System.out.println(
-                    "Nome inválido! O nome deve ter mais de 3 caracteres e não pode conter números ou caracteres especiais.");
+            System.out.println("Nome inválido! O nome deve ter mais de 3 caracteres e não pode conter números ou caracteres especiais.");
             return false;
         }
     }
@@ -46,7 +46,7 @@ public class UserValidation {
         if (Pattern.matches(padrao, email)) {
             return true;
         } else {
-            System.out.println("Email inválido! Tente novamente.");
+            System.out.println("E-mail inválido! Verifique o formato do e-mail fornecido e tente novamente.");
             return false;
         }
     }
@@ -55,21 +55,21 @@ public class UserValidation {
         if (Pattern.matches(padrao, telefone)) {
             return true;
         } else {
-            System.out.println("Telefone inválido! Tente novamente.");
+            System.out.println("Telefone inválido! Verifique o número fornecido e tente novamente.");
             return false;
         }
     }
 
     public boolean validarSenha(String senha) {
-            if (senha.contains(" ")) {
-                System.out.println("A senha não pode conter espaços. Tente novamente!");
-                return false;
-            }
-            if (!(senha.length() >= 8)) {
-                System.out.println("Senha muito curta, tente novamente!");
-                return false;
-            } else {
-                return true;
-            }
+        if (senha.contains(" ")) {
+            System.out.println("Senha inválida! A senha não pode conter espaços em branco. Verifique e tente novamente.");
+            return false;
+        }
+        if (senha.length() < 8) {
+            System.out.println("Senha inválida! A senha deve ter pelo menos 8 caracteres. Tente novamente.");
+            return false;
+        } else {
+            return true;
         }
     }
+}

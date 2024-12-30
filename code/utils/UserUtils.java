@@ -19,7 +19,7 @@ public class UserUtils {
         values.add("cli");
     }
 
-    public void cadastrarTelefone(UsuarioModel model, ArrayList<Object> values) {
+    public void telefone(UsuarioModel model, ArrayList<Object> values) {
         values.clear();
         values.add(model.getTelefone());
         values.add(model.getCpf());
@@ -44,5 +44,12 @@ public class UserUtils {
         values.add(reserva.getIdLocal());
         values.add(Date.valueOf(creationDate));
         values.add(Time.valueOf(creationTime));
+    }
+
+    public void atualizarInfo(UsuarioModel model, ArrayList<Object> values) {
+        values.clear();
+        values.add(model.getNome());
+        values.add(model.getEmail());
+        values.add(model.getSenha());
     }
 }
