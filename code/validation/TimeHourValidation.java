@@ -6,9 +6,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
-import model.ReservaModel;
+import model.BookingModel;
 
-public class ReservaValidation {
+public class TimeHourValidation {
 
     public boolean validarHorario(String horarioInput) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -37,7 +37,7 @@ public class ReservaValidation {
         }
     }
 
-    public LocalTime calcularHorarioFim(ReservaModel model, String duracao) {
+    public LocalTime calcularHorarioFim(BookingModel model, String duracao) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         LocalTime duracaoTime = LocalTime.parse(duracao, formatter);
 

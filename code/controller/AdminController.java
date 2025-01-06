@@ -1,26 +1,28 @@
 package controller;
 
-import model.AdministradorModel;
-import view.AdministradorView;
-import model.ReservaModel;
-import model.UsuarioModel;
-import view.UsuarioView;
-import utils.AdmUtils;
+import model.AdminModel;
+import view.AdminView;
+import model.BookingModel;
+import model.UserModel;
+import view.UserView;
+import utils.AdminUtils;
 import utils.CRUD;
+import utils.UserUtils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.sql.ResultSet;
 import java.util.Scanner;
 
-public class AdministradorController implements IUserAdmController {
-    private UsuarioController usuarioController = new UsuarioController();
+public class AdminController implements IUserAdmController {
+    private UserController usuarioController = new UserController();
     private LocalController localController = new LocalController();
-    private final ReservaModel reservaModel = new ReservaModel();
-    private AdministradorModel model = new AdministradorModel();
-    private AdministradorView view = new AdministradorView();
-    private AdmUtils utils = new AdmUtils();
+    private final BookingModel reservaModel = new BookingModel();
+    private AdminModel model = new AdminModel();
+    private AdminView view = new AdminView();
+    private AdminUtils utils = new AdminUtils();
     private CRUD crud = new CRUD();
+    private final ArrayList<Object> values = new ArrayList<>();
 
     public void iniciar(Scanner scanner) {
         boolean logado = false;
@@ -37,8 +39,7 @@ public class AdministradorController implements IUserAdmController {
 
     @Override
     public boolean logar(Scanner scanner) {
-        ArrayList<Object> values = new ArrayList<>();
-
+        values.clear();
         view.logar(scanner, model);
         utils.logar(model, values);
 
@@ -48,7 +49,7 @@ public class AdministradorController implements IUserAdmController {
             if (rsUsuario.next()) {
                 System.out.println("Seja bem-vindo: " + rsUsuario.getString("nome"));
                 addTelefone();
-                loginSuccess(rsUsuario);
+                utils.loginSuccess(rsUsuario, model);
                 return true;
             } else {
                 System.out.println("Usuário não encontrado.");
@@ -60,15 +61,8 @@ public class AdministradorController implements IUserAdmController {
         return false;
     }
 
-    private void loginSuccess(ResultSet rsUsuario) throws SQLException {
-        model.setCpf(rsUsuario.getString("cpf"));
-        model.setNome(rsUsuario.getString("nome"));
-        model.setEmail(rsUsuario.getString("email"));
-        model.setSenha(rsUsuario.getString("senha"));
-    }
-
     private void addTelefone() {
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
         values.add(model.getCpf());
 
         String query = "SELECT numero FROM telefoneusuario WHERE cpfUsuario = ?";
@@ -84,8 +78,8 @@ public class AdministradorController implements IUserAdmController {
 
     @Override
     public void fazerReserva(Scanner scanner) {
-        UsuarioView userView = new UsuarioView();
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
+        UserView userView = new UserView();
 
         listarUsuarios();
         localController.listar();
@@ -107,34 +101,39 @@ public class AdministradorController implements IUserAdmController {
 
     public void listarReservas(Scanner scanner) {
         int opcao = view.listarReservas(scanner);
+
         if (opcao == 1) {
             listarUsuarios();
-            System.out.println("Digite o CPF do usuario para listar as reservas: ");
-            String cpf = scanner.nextLine();
+            scanner.nextLine();
+            String cpf = view.getCpf(scanner);
             usuarioController.listarReservas(cpf);
+
         } else if (opcao == 2) {
             localController.listar();
-            System.out.println("Digite o ID do local para listar as reservas: ");
-            int id = scanner.nextInt();
+            int id = view.getId(scanner);
             localController.listarReservas(id);
+
+        } else {
+            System.out.println("Opção inválida! Tente novamente.");
+            scanner.nextLine();
         }
     }
 
-    @Override
-    public void cancelarReserva(Scanner scanner, String cpf) {
-        listarReservas(scanner);
-        ArrayList<Object> values = new ArrayList<>();
-        int idreserva = view.getId(scanner);
+    public void cancelarReserva(Scanner scanner) {
+        int opcao = view.listarReservas(scanner);
 
-        values.add(idreserva);
-        values.add(cpf);
-
-        String query = "UPDATE reserva SET status = 'Cancelada' WHERE idreserva = ? and cpfusuario = ?";
-
-        try {
-            crud.update(query, values);
-        } catch (SQLException e) {
-            System.out.println("Erro ao cancelar a reserva: " + e.getMessage());
+        if (opcao == 1) {
+            listarUsuarios();
+            scanner.nextLine();
+            String cpf = view.getCpf(scanner);
+            usuarioController.cancelarReserva(scanner, cpf);
+        } else if (opcao == 2) {
+            localController.listar();
+            int id = view.getId(scanner);
+            localController.cancelarReserva(scanner, id);
+        } else {
+            System.out.println("Opção inválida! Tente novamente.");
+            scanner.nextLine();
         }
     }
 
@@ -145,59 +144,51 @@ public class AdministradorController implements IUserAdmController {
 
     @Override
     public void atualizarInfo(Scanner scanner) {
+        UserView usuarioView = new UserView();
+        UserUtils userUtils = new UserUtils();
+        values.clear();
         listarUsuarios();
-        System.out.println("Digite o CPF do usuário que deseja alterar informações: ");
-        String cpf = scanner.nextLine();
-
-        UsuarioModel usuario = buscarUsuarioPorCpf(cpf);
-
-        if (usuario != null) {
-            System.out.println("Digite o novo nome (ou pressione Enter para manter o atual): ");
-            String novoNome = scanner.nextLine();
-            System.out.println("Digite o novo e-mail (ou pressione Enter para manter o atual): ");
-            String novoEmail = scanner.nextLine();
-            System.out.println("Digite a nova senha (ou pressione Enter para manter a atual): ");
-            String novaSenha = scanner.nextLine();
-
-            atualizarUsuario(usuario, cpf, novoNome, novoEmail, novaSenha);
-        } else {
-            System.out.println("Usuário não encontrado.");
+        String cpf = view.getCpf(scanner);
+        UserModel usuarioModel = buscarUsuarioPorCpf(cpf);
+        if (usuarioModel == null) {
+            return;
         }
-    }
 
-    private void atualizarUsuario(UsuarioModel usuario, String cpf, String novoNome, String novoEmail,
-            String novaSenha) {
-        ArrayList<Object> values = new ArrayList<>();
-        String nomeFinal = (novoNome != null && !novoNome.isEmpty()) ? novoNome : usuario.getNome();
-        String emailFinal = (novoEmail != null && !novoEmail.isEmpty()) ? novoEmail : usuario.getEmail();
-        String senhaFinal = (novaSenha != null && !novaSenha.isEmpty()) ? novaSenha : usuario.getSenha();
-        values.add(nomeFinal);
-        values.add(emailFinal);
-        values.add(senhaFinal);
-        values.add(cpf);
+        usuarioView.atualizarInfo(usuarioModel, scanner);
+        userUtils.atualizarInfo(usuarioModel, values);
 
         String query = "UPDATE usuario SET nome = ?, email = ?, senha = ? WHERE cpf = ?";
+        String queryT = "UPDATE telefoneusuario SET numero = ? WHERE cpfUsuario = ?";
 
         try {
             crud.update(query, values);
         } catch (SQLException e) {
-            System.out.println("Erro ao alterar usuario: " + e.getMessage());
+            System.out.println("Erro ao Atualizar Info: " + e.getMessage());
+        }
+
+        utils.telefone(usuarioModel, values);
+
+        try {
+            crud.update(queryT, values);
+        } catch (SQLException e) {
+            System.out.println("Erro ao atualizar Telefone: " + e.getMessage());
         }
     }
 
-    private UsuarioModel buscarUsuarioPorCpf(String cpf) {
-        ArrayList<Object> values = new ArrayList<>();
+    private UserModel buscarUsuarioPorCpf(String cpf) {
+        values.clear();
         values.add(cpf);
 
         String query = "SELECT * FROM usuario WHERE cpf = ?";
-        UsuarioModel usuario = new UsuarioModel();
 
         try (ResultSet rs = crud.select(query, values)) {
             if (rs.next()) {
-                usuario.setNome(rs.getString("nome"));
-                usuario.setEmail(rs.getString("email"));
-                usuario.setSenha(rs.getString("senha"));
+                UserModel usuario = new UserModel();
+                utils.setUsuario(usuario, rs);
                 return usuario;
+            } else {
+                System.out.println("Usuário não encontrado.");
+                return null;
             }
         } catch (SQLException e) {
             System.out.println("Erro ao buscar usuário: " + e.getMessage());
@@ -206,8 +197,8 @@ public class AdministradorController implements IUserAdmController {
     }
 
     public void listarUsuarios() {
-        String query = "SELECT * FROM usuario";
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
+        String query = "SELECT * FROM usuario where tipo = 'cli'";
 
         try (ResultSet rs = crud.select(query, values)) {
             view.listar(rs);
@@ -221,7 +212,6 @@ public class AdministradorController implements IUserAdmController {
         System.out.println("Digite o CPF do usuário que deseja bloquear: ");
         String cpf = scanner.nextLine();
 
-        ArrayList<Object> values = new ArrayList<>();
         values.add(cpf);
 
         String sql = "UPDATE usuario SET status = 'Bloqueado' WHERE cpf = ?";
@@ -317,7 +307,7 @@ public class AdministradorController implements IUserAdmController {
                 listarReservas(scanner);
                 break;
             case 7:
-                cancelarReserva(scanner, model.getCpf());
+                cancelarReserva(scanner);
                 break;
             case 8:
                 exibirInfo();

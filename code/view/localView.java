@@ -1,6 +1,7 @@
 package view;
 
 import model.LocalModel;
+import validation.TimeHourValidation;
 
 import java.sql.SQLException;
 import java.time.LocalTime;
@@ -9,34 +10,50 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class LocalView {
+    TimeHourValidation validation = new TimeHourValidation();
 
-    public LocalModel local;
-
-    public void cadastrar(Scanner scanner, LocalModel local, ArrayList<Object> values) {
+    public void cadastrar(Scanner scanner, LocalModel local) {
         System.out.print("Nome: ");
         local.setNome(scanner.nextLine());
-        values.add(local.getNome());
         System.out.print("Cep: ");
         local.setCep(scanner.nextLine());
-        values.add(local.getCep());
         System.out.print("Tipo: ");
         local.setTipo(scanner.nextLine());
-        values.add(local.getTipo());
         System.out.print("Numero: ");
-        local.setNumero(scanner.nextInt());
-        values.add(local.getNumero());
+        local.setNumero(scanner.nextInt()); 
         System.out.print("Limites de reservas por dia (por usuário): ");
-        local.setNumero(scanner.nextInt());
-        values.add(local.getNumero());
+        local.setLimiteDia(scanner.nextInt());
         System.out.print("Tempo máximo de uma reserva (em horas): ");
-        local.setNumero(scanner.nextInt());
-        values.add(local.getNumero());
+        local.setTempoMaximo(obterHorario(scanner));
         System.out.print("Horario de abertura: ");
-        local.setNumero(scanner.nextInt());
-        values.add(local.getNumero());
+        local.setHorarioAbertura(obterHorario(scanner));
         System.out.print("Horario de fechamento: ");
-        local.setNumero(scanner.nextInt());
-        values.add(local.getNumero());
+        local.setHorarioFechamento(obterHorario(scanner));
+    }
+
+    public int getId(Scanner scanner) {
+        int id;
+        while (true) {
+            System.out.print("Digite o ID da reserva que deseja cancelar: ");
+            if (scanner.hasNextInt()) {
+                id = scanner.nextInt();
+                break;
+            } else {
+                System.out.println("Por favor, insira um número válido para o ID.");
+                scanner.next();
+            }
+        }
+        return id;
+    }
+
+    private LocalTime obterHorario(Scanner scanner) {
+        String horarioInput;
+        do {
+            System.out.print("Escolha o horário da reserva (HH:mm): ");
+            horarioInput = scanner.nextLine();
+        } while (!validation.validarHorario(horarioInput));
+
+        return LocalTime.parse(horarioInput);
     }
 
     public void listar(ResultSet rs) throws SQLException {

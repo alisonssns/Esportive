@@ -4,22 +4,50 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
-import model.AdministradorModel;
+import model.AdminModel;
+import validation.UserValidation;
 
-public class AdministradorView implements IView {
+public class AdminView implements IView {
+    UserValidation validation = new UserValidation();
 
-    public void logar(Scanner scanner, AdministradorModel model) {
-        System.out.print("Email: ");
-        model.setEmail(scanner.nextLine());
+    public void logar(Scanner scanner, AdminModel model) {
+        model.setEmail(lerEmail(scanner));
+        model.setSenha(lerSenha(scanner));
+    }
 
-        System.out.print("Senha: ");
-        model.setSenha(scanner.nextLine());
+    public String lerEmail(Scanner scanner) {
+        final String PADRAO_EMAIL = "^[a-zA-Z0-9._%+-]+@gmail\\.com$";
+        String email;
+        do {
+            System.out.print("Email (Ex: user@gmail.com): ");
+            email = scanner.nextLine();
+        } while (!validation.validarEmail(email, PADRAO_EMAIL));
+        return email;
+    }
+
+    public String lerSenha(Scanner scanner) {
+        String senha;
+        do {
+            System.out.print("Senha: ");
+            senha = scanner.nextLine();
+        } while (!validation.validarSenha(senha));
+        return senha;
     }
 
     public int getId(Scanner scanner) {
-        System.out.println("Digite o ID da reserva que deseja cancelar: ");
-        int id = scanner.nextInt();
-        return id;
+        System.out.print("Digite o ID:  ");
+        if (scanner.hasNextInt()) {
+            int id = scanner.nextInt();
+            return id;
+        } else {
+            return 0;
+        }
+    }
+
+    public String getCpf(Scanner scanner) {
+        System.out.print("Digite o cpf do Usuario: ");
+        String cpf = scanner.nextLine();
+        return cpf;
     }
 
     public void listar(ResultSet rs) throws SQLException {
@@ -40,8 +68,13 @@ public class AdministradorView implements IView {
         System.out.println("Quer listar reservas de usuario ou local?");
         System.out.println("1 - Usuario");
         System.out.println("2 - Local");
-        int opcao = scanner.nextInt();
-        return opcao;
+        System.out.print("Escolha: ");
+        if (scanner.hasNextInt()) {
+            int opcao = scanner.nextInt();
+            return opcao;
+        } else {
+            return 0;
+        }
     }
 
     @Override
@@ -67,7 +100,7 @@ public class AdministradorView implements IView {
         System.out.print("Escolha uma opção: ");
     }
 
-    public void exibirInfo(AdministradorModel model) {
+    public void exibirInfo(AdminModel model) {
         System.out.printf("CPF:           %s%n", model.getCpf());
         System.out.printf("Nome:          %s%n", model.getNome());
         System.out.printf("E-mail:        %s%n", model.getEmail());

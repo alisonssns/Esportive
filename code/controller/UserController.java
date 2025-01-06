@@ -1,8 +1,8 @@
 package controller;
 
-import model.ReservaModel;
-import model.UsuarioModel;
-import view.UsuarioView;
+import model.BookingModel;
+import model.UserModel;
+import view.UserView;
 import utils.UserUtils;
 import utils.CRUD;
 
@@ -11,11 +11,11 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class UsuarioController implements IUserAdmController {
+public class UserController implements IUserAdmController {
     private final LocalController localController = new LocalController();
-    private final ReservaModel modelReserva = new ReservaModel();
-    private final UsuarioModel model = new UsuarioModel();
-    private final UsuarioView view = new UsuarioView();
+    private final BookingModel modelReserva = new BookingModel();
+    private final UserModel model = new UserModel();
+    private final UserView view = new UserView();
     private final UserUtils utils = new UserUtils();
     private final CRUD crud = new CRUD();
     private final ArrayList<Object> values = new ArrayList<>();
@@ -30,23 +30,33 @@ public class UsuarioController implements IUserAdmController {
 
     @Override
     public void cadastrar(Scanner scanner) {
-        values.clear();
         view.cadastrar(scanner, model);
+
+        if (utils.verficiarCpfExistente(model.getCpf())) {
+            System.out.println("Este CPF já está associado a uma conta.");
+            return;
+        } else if (utils.verificarEmailExistente(model.getEmail())) {
+            System.out.println("Este e-mail já está associado a uma conta.");
+            return;
+        } else if (utils.verificarTelefoneExistente(model.getTelefone())) {
+            System.out.println("Este telefone já está associado a uma conta.");
+            return;
+        }
 
         String query = "INSERT INTO usuario (cpf, nome, email, senha, tipo) VALUES (?, ?, ?, ?, ?)";
         String queryT = "INSERT INTO telefoneusuario (numero, cpfUsuario) VALUES (?, ?)";
 
+        values.clear();
         utils.cadastrar(model, values);
 
         try {
             crud.insert(query, values);
             utils.telefone(model, values);
             crud.insert(queryT, values);
+            System.out.println("Usuário cadastrado com sucesso!");
         } catch (SQLException e) {
             System.err.println("Erro ao executar a consulta: " + e.getMessage());
             e.printStackTrace();
-        } finally {
-            System.out.println("Usuário cadastrado com sucesso!");
         }
     }
 
@@ -113,39 +123,61 @@ public class UsuarioController implements IUserAdmController {
         }
     }
 
-    public void listarReservas(String cpf) {
+    public boolean listarReservas(String cpf) {
         values.clear();
-        String query = "SELECT * FROM reserva WHERE cpfUsuario = ?";
+        String query = "SELECT * FROM reserva WHERE cpfUsuario = ? and status != 'CANCELADA'";
         values.add(cpf);
-
+    
         ResultSet rs = null;
         try {
             rs = crud.select(query, values);
-            if (rs != null) {
+            if (rs != null && rs.next()) {
                 view.listarReservas(rs);
+                return true;
+            } else {
+                System.out.println("Nenhuma reserva encontrada para este CPF.");
+                return false;
             }
         } catch (SQLException e) {
             System.err.println("Erro ao executar a consulta: " + e.getMessage());
             e.printStackTrace();
+            return false;
         }
     }
-
-    @Override
+    
     public void cancelarReserva(Scanner scanner, String cpf) {
-        values.clear();
         listarReservas(cpf);
         int idreserva = view.getId(scanner);
 
+        values.clear();
         values.add(idreserva);
         values.add(cpf);
 
-        String query = "UPDATE reserva SET status = 'Cancelada' WHERE idreserva = ? and cpfusuario = ?";
+        if (!existeReserva(values)) {
+            System.out.println("Reserva não encontrada.");
+            return;
+        }
+
+        String query = "UPDATE reserva SET status = 'CANCELADA' WHERE idreserva = ? and cpfusuario = ?";
 
         try {
             crud.update(query, values);
         } catch (SQLException e) {
             System.out.println("Erro ao cancelar a reserva: " + e.getMessage());
         }
+    }
+
+    private boolean existeReserva(ArrayList<Object> values) {
+        String query = "SELECT COUNT(*) FROM reserva WHERE idreserva = ? AND cpfusuario = ?";
+        try {
+            ResultSet rs = crud.select(query, values);
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao verificar a reserva: " + e.getMessage());
+        }
+        return false;
     }
 
     @Override
@@ -156,7 +188,7 @@ public class UsuarioController implements IUserAdmController {
     @Override
     public void atualizarInfo(Scanner scanner) {
         values.clear();
-        
+
         view.atualizarInfo(model, scanner);
         utils.atualizarInfo(model, values);
 

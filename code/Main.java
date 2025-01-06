@@ -1,6 +1,6 @@
 import java.util.Scanner;
-import controller.UsuarioController;
-import controller.AdministradorController;
+import controller.UserController;
+import controller.AdminController;
 
 public class Main {
   public static void main(String[] args) {
@@ -13,10 +13,10 @@ public class Main {
       System.out.print("Escolha uma opção: ");
       int opcao = scanner.nextInt();
       if (opcao == 1) {
-        AdministradorController controller = new AdministradorController();
+        AdminController controller = new AdminController();
         controller.iniciar(scanner);
       } else if (opcao == 2) {
-        UsuarioController controller = new UsuarioController();
+        UserController controller = new UserController();
         controller.iniciar(scanner);
       } else if (opcao == 3) {
         break;

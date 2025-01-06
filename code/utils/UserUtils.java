@@ -2,15 +2,18 @@ package utils;
 
 import java.sql.Time;
 import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 
-import model.ReservaModel;
-import model.UsuarioModel;
+import model.BookingModel;
+import model.UserModel;
 
 public class UserUtils {
-    public void cadastrar(UsuarioModel model, ArrayList<Object> values) {
+    CRUD crud = new CRUD();
+    public void cadastrar(UserModel model, ArrayList<Object> values) {
         values.clear();
         values.add(model.getCpf());
         values.add(model.getNome());
@@ -19,19 +22,20 @@ public class UserUtils {
         values.add("cli");
     }
 
-    public void telefone(UsuarioModel model, ArrayList<Object> values) {
+    public void telefone(UserModel model, ArrayList<Object> values) {
         values.clear();
         values.add(model.getTelefone());
         values.add(model.getCpf());
     }
 
-    public void logar(UsuarioModel model, ArrayList<Object> values) {
+    public void logar(UserModel model, ArrayList<Object> values) {
         values.clear();
         values.add(model.getEmail());
         values.add(model.getSenha());
     }
 
-    public void fazerReserva(String cpf, ReservaModel reserva, ArrayList<Object> values) {
+
+    public void fazerReserva(String cpf, BookingModel reserva, ArrayList<Object> values) {
         LocalDate creationDate = LocalDate.now();
         LocalTime creationTime = LocalTime.now().minusHours(1);
 
@@ -46,10 +50,59 @@ public class UserUtils {
         values.add(Time.valueOf(creationTime));
     }
 
-    public void atualizarInfo(UsuarioModel model, ArrayList<Object> values) {
+    public void atualizarInfo(UserModel model, ArrayList<Object> values) {
         values.clear();
         values.add(model.getNome());
         values.add(model.getEmail());
         values.add(model.getSenha());
+        values.add(model.getCpf());
+    }
+
+    public boolean verificarEmailExistente(String cpf) {
+        ArrayList<Object> values = new ArrayList<>();
+        values.add(cpf);
+        String query = "SELECT COUNT(*) FROM usuario WHERE cpf = ?";
+        try {
+            ResultSet rs = crud.select(query, values);
+             if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao verificar a existência do usuário: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean verficiarCpfExistente(String cpf) {
+        ArrayList<Object> values = new ArrayList<>();
+        values.add(cpf);
+        String query = "SELECT COUNT(*) FROM usuario WHERE cpf = ?";
+        try {
+            ResultSet rs = crud.select(query, values);
+             if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao verificar a existência do usuário: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean verificarTelefoneExistente(String telefone) {
+        ArrayList<Object> values = new ArrayList<>();
+        values.add(telefone);
+        String query = "SELECT COUNT(*) FROM usuario WHERE telefone = ?";
+        try {
+            ResultSet rs = crud.select(query, values);
+             if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao verificar a existência do usuário: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
     }
 }

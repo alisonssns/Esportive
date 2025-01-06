@@ -34,7 +34,7 @@ public class UserValidation {
     }
 
     public boolean validarNome(String nome) {
-        if (nome.length() > 3 && nome.matches("[a-zA-Z ]+")) {
+        if (nome.length() > 3 && nome.matches("[a-zA-Z ]+") && !(nome.contains("  "))) {
             return true;
         } else {
             System.out.println("Nome inválido! O nome deve ter mais de 3 caracteres e não pode conter números ou caracteres especiais.");
@@ -72,4 +72,6 @@ public class UserValidation {
             return true;
         }
     }
+
+    
 }

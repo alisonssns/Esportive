@@ -12,8 +12,6 @@ public interface IUserAdmController {
 
     void fazerReserva(Scanner scanner);
 
-    void cancelarReserva(Scanner scanner, String cpf);
-
     void exibirInfo();
 
     boolean exibirTelaInicial(Scanner scanner);

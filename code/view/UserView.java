@@ -10,18 +10,18 @@ import java.sql.SQLException;
 import controller.LocalController;
 
 import model.LocalModel;
-import model.ReservaModel;
-import model.UsuarioModel;
-import utils.ReservaUtils;
-import validation.ReservaValidation;
+import model.BookingModel;
+import model.UserModel;
+import utils.BookingUtils;
+import validation.TimeHourValidation;
 import validation.UserValidation;
 
-public class UsuarioView implements IView {
-    ReservaValidation reservaValidator = new ReservaValidation();
-    UserValidation usuarioValidator = new UserValidation();
-    ReservaUtils reservaUtils = new ReservaUtils();
+public class UserView implements IView {
+    TimeHourValidation reservaValidator = new TimeHourValidation();
+    UserValidation validation = new UserValidation();
+    BookingUtils reservaUtils = new BookingUtils();
 
-    public void cadastrar(Scanner scanner, UsuarioModel model) {
+    public void cadastrar(Scanner scanner, UserModel model) {
         model.setCpf(lerCpf(scanner));
 
         model.setNome(lerNome(scanner));
@@ -33,17 +33,23 @@ public class UsuarioView implements IView {
         model.setTelefone(lerTelefone(scanner));
     }
 
-    public void logar(Scanner scanner, UsuarioModel model) {
-        System.out.print("Email: ");
-        model.setEmail(scanner.nextLine());
-
-        System.out.print("Senha: ");
-        model.setSenha(scanner.nextLine());
+    public void logar(Scanner scanner, UserModel model) {
+        model.setEmail(lerEmail(scanner));
+        model.setSenha(lerSenha(scanner));
     }
 
     public int getId(Scanner scanner) {
-        System.out.println("Digite o ID da reserva que deseja cancelar: ");
-        int id = scanner.nextInt();
+        int id;
+        while (true) {
+            System.out.print("Digite o ID da reserva que deseja cancelar: ");
+            if (scanner.hasNextInt()) {
+                id = scanner.nextInt();
+                break;
+            } else {
+                System.out.println("Por favor, insira um número válido para o ID.");
+                scanner.next();
+            }
+        }
         return id;
     }
 
@@ -52,7 +58,7 @@ public class UsuarioView implements IView {
         do {
             System.out.print("CPF (11 dígitos): ");
             cpf = scanner.nextLine();
-        } while (!usuarioValidator.validarCpf(cpf));
+        } while (!validation.validarCpf(cpf));
         return cpf;
     }
 
@@ -61,7 +67,8 @@ public class UsuarioView implements IView {
         do {
             System.out.print("Nome: ");
             nome = scanner.nextLine();
-        } while (!usuarioValidator.validarNome(nome));
+            nome = nome.trim();
+        } while (!validation.validarNome(nome));
         return nome;
     }
 
@@ -70,7 +77,7 @@ public class UsuarioView implements IView {
         do {
             System.out.print("Senha: ");
             senha = scanner.nextLine();
-        } while (!usuarioValidator.validarSenha(senha));
+        } while (!validation.validarSenha(senha));
         return senha;
     }
 
@@ -80,7 +87,7 @@ public class UsuarioView implements IView {
         do {
             System.out.print("Email (Ex: user@gmail.com): ");
             email = scanner.nextLine();
-        } while (!usuarioValidator.validarEmail(email, PADRAO_EMAIL));
+        } while (!validation.validarEmail(email, PADRAO_EMAIL));
         return email;
     }
 
@@ -90,18 +97,30 @@ public class UsuarioView implements IView {
         do {
             System.out.print("Telefone (Ex: 41 99999-9999): ");
             telefone = scanner.nextLine();
-        } while (!usuarioValidator.validarTelefone(telefone, PADRAO_TELEFONE));
+        } while (!validation.validarTelefone(telefone, PADRAO_TELEFONE));
         return telefone;
     }
 
-    public void fazerReserva(Scanner scanner, ReservaModel reserva) {
+    public void fazerReserva(Scanner scanner, BookingModel reserva) {
         LocalController localController = new LocalController();
 
-        System.out.print("Qual o local gostaria de fazer a reserva? Escolha pelo ID:");
-        reserva.setIdLocal(scanner.nextInt());
-        scanner.nextLine();
+        LocalModel localModel = null;
+        do {
+            System.out.print("Qual o local gostaria de fazer a reserva? Escolha pelo ID: ");
+            while (!scanner.hasNextInt()) {
+                System.out
+                        .println("Por favor, insira um número válido para o ID (apenas números inteiros são aceitos).");
+                scanner.next();
+                System.out.print("Qual o local gostaria de fazer a reserva? Escolha pelo ID: ");
+            }
+            int idLocal = scanner.nextInt();
 
-        LocalModel localModel = localController.infoLocal(reserva.getIdLocal());
+            reserva.setIdLocal(idLocal);
+            localModel = localController.infoLocal(reserva.getIdLocal());
+
+        } while (localModel == null);
+
+        scanner.nextLine();
 
         reserva.setData(obterData(scanner));
 
@@ -124,7 +143,7 @@ public class UsuarioView implements IView {
         return LocalTime.parse(horarioInput);
     }
 
-    public LocalTime obterDuracao(LocalModel localModel, Scanner scanner, ReservaModel reserva) {
+    public LocalTime obterDuracao(LocalModel localModel, Scanner scanner, BookingModel reserva) {
         String horarioInput;
 
         if (localModel.getTempoMaximo().getHour() > 1) {
@@ -136,6 +155,8 @@ public class UsuarioView implements IView {
             } while (!reservaValidator.validarHorario(horarioInput));
 
         } else {
+            System.out.println("Este local permite reserva de até " + localModel.getTempoMaximo() + " hora.");
+            System.out.println(localModel.getTempoMaximo() + " hora foi reservada automaticamente");
             horarioInput = localModel.getTempoMaximo().toString();
         }
 
@@ -157,12 +178,13 @@ public class UsuarioView implements IView {
 
     public void listarReservas(ResultSet rs) throws SQLException {
         String line = "-------------------------------------------------------------------";
+        String padrao = "| %-5s | %-10s | %-8s | %-8s | %-10s | %-5s |%n";
         System.out.println(line);
-        System.out.printf("| %-5s | %-10s | %-8s | %-8s | %-10s | %-5s |%n", "ID", "Data", "Inicio", "Fim", "Status",
+        System.out.printf(padrao, "ID", "Data", "Inicio", "Fim", "Status",
                 "IdLocal");
         System.out.println(line);
         while (rs.next()) {
-            System.out.printf("| %-5s | %-10s | %-8s | %-8s | %-10s | %-7s |%n",
+            System.out.printf(padrao,
                     rs.getInt("idreserva"),
                     rs.getDate("data"),
                     rs.getTime("horario_inicio"),
@@ -173,20 +195,14 @@ public class UsuarioView implements IView {
         System.out.println(line);
     }
 
-    public void atualizarInfo(UsuarioModel model, Scanner scanner) {
-        System.out.println("Qual informação você deseja atulizar?");
+    public void atualizarInfo(UserModel model, Scanner scanner) {
         System.out.println("1. Nome");
         System.out.println("2. E-mail");
         System.out.println("3. Senha");
         System.out.println("4. Telefone");
+        System.out.print("Qual informação você deseja atulizar: ");
         int opcao = scanner.nextInt();
-
-        try {
-            opcao = Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            System.out.println("Entrada inválida. Digite um número entre 1 e 4.");
-            return;
-        }
+        scanner.nextLine();
 
         switch (opcao) {
             case 1:
@@ -206,7 +222,7 @@ public class UsuarioView implements IView {
         }
     }
 
-    public void exibirInfo(UsuarioModel model) {
+    public void exibirInfo(UserModel model) {
         System.out.printf("CPF:           %s%n", model.getCpf());
         System.out.printf("Nome:          %s%n", model.getNome());
         System.out.printf("E-mail:        %s%n", model.getEmail());

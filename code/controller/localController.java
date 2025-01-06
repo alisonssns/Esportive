@@ -16,10 +16,12 @@ public class LocalController {
     private LocalUtils utils = new LocalUtils();
     private LocalView view = new LocalView();
     private CRUD crud = new CRUD();
+    private ArrayList<Object> values = new ArrayList<>();
 
     public void cadastrar(Scanner scanner) {
-        ArrayList<Object> values = new ArrayList<>();
-        view.cadastrar(scanner, model, values);
+        values.clear();
+        view.cadastrar(scanner, model);
+        utils.cadastrar(model, values);
         String sql = "INSERT INTO local (nome, tipo, cep, numero, limite_por_dia, tempo_maximo, horario_abertura, horario_funcionamento) VALUES (?,?,?,?,?,?,?,?)";
 
         try {
@@ -31,7 +33,7 @@ public class LocalController {
 
     public void listar() {
         String sql = "SELECT * FROM local";
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
 
         try (ResultSet rs = crud.select(sql, values)) {
             view.listar(rs);
@@ -40,26 +42,76 @@ public class LocalController {
         }
     }
 
-    public void listarReservas(int idLocal) {
-        String sql = "SELECT * FROM reserva WHERE idLocal = ?";
-        ArrayList<Object> values = new ArrayList<>();
+    public boolean listarReservas(int idLocal) {
+        String query = "SELECT * FROM reserva WHERE idLocal = ?";
+        values.clear();
         values.add(idLocal);
 
-        try (ResultSet rs = crud.select(sql, values)) {
-            view.listarReservas(rs);
+        ResultSet rs = null;
+        try {
+            rs = crud.select(query, values);
+            if (rs != null && rs.next()) {
+                view.listarReservas(rs);
+                return true;
+            } else {
+                System.out.println("Nenhuma reserva encontrada para este ID");
+                return false;
+            }
         } catch (SQLException e) {
-            System.out.println("Erro: " + e.getMessage());
+            System.err.println("Erro ao executar a consulta: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
     }
 
+    public void cancelarReserva(Scanner scanner, int id) {
+        listarReservas(id);
+        int idreserva = view.getId(scanner);
+
+        values.clear();
+        values.add(idreserva);
+        values.add(id);
+
+        if (!existeReserva(values)) {
+            System.out.println("Reserva não encontrada.");
+            return;
+        }
+
+        String query = "UPDATE reserva SET status = 'CANCELADA' WHERE idreserva = ? and idLocal = ?";
+
+        try {
+            crud.update(query, values);
+        } catch (SQLException e) {
+            System.out.println("Erro ao cancelar a reserva: " + e.getMessage());
+        }
+    }
+
+    private boolean existeReserva(ArrayList<Object> values) {
+        String query = "SELECT COUNT(*) FROM reserva WHERE idreserva = ? AND idLocal = ?";
+        try {
+            ResultSet rs = crud.select(query, values);
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao verificar a reserva: " + e.getMessage());
+        }
+        return false;
+    }    
+
     public LocalModel infoLocal(int idLocal) {
-        LocalModel localModel = new LocalModel();
+        LocalModel localModel = null;
         String sql = "SELECT * FROM local WHERE idLocal = ?";
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
         values.add(idLocal);
 
         try (ResultSet rs = crud.select(sql, values)) {
-            utils.setLocal(localModel, rs);
+            if (rs.next()) {
+                localModel = new LocalModel();
+                utils.setLocal(localModel, rs);
+            }else {
+                System.out.println("Local não encontrado para o ID fornecido.");
+            }
         } catch (SQLException e) {
             System.out.println("Erro: " + e.getMessage());
         }
@@ -70,7 +122,7 @@ public class LocalController {
     public ArrayList<LocalTime> listarReservasDia(int idLocal, LocalDate data) {
         ArrayList<LocalTime> horariosReservados = new ArrayList<>();
         String sql = "SELECT horario_inicio, horario_fim FROM reserva WHERE idLocal = ? AND data = ?";
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
         values.add(idLocal);
         values.add(java.sql.Date.valueOf(data));
 
@@ -98,7 +150,7 @@ public class LocalController {
     public void listarHorariosDisponiveis(int idLocal, LocalDate data) {
         ArrayList<LocalTime> horariosReservados = listarReservasDia(idLocal, data);
         String sql = "SELECT horario_abertura, horario_fechamento FROM local WHERE idLocal = ?";
-        ArrayList<Object> values = new ArrayList<>();
+        values.clear();
         values.add(idLocal);
 
         try (ResultSet rs = crud.select(sql, values)) {
