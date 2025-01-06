@@ -3,7 +3,7 @@ package model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-public class BookingModel {
+public class ReservaModel {
     private LocalDate data;
     private LocalTime horarioInicio;
     private LocalTime horarioFim;

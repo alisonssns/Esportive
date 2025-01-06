@@ -10,16 +10,14 @@ import java.sql.SQLException;
 import controller.LocalController;
 
 import model.LocalModel;
-import model.BookingModel;
+import model.ReservaModel;
 import model.UserModel;
-import utils.BookingUtils;
 import validation.TimeHourValidation;
 import validation.UserValidation;
 
 public class UserView implements IView {
     TimeHourValidation reservaValidator = new TimeHourValidation();
     UserValidation validation = new UserValidation();
-    BookingUtils reservaUtils = new BookingUtils();
 
     public void cadastrar(Scanner scanner, UserModel model) {
         model.setCpf(lerCpf(scanner));
@@ -33,6 +31,16 @@ public class UserView implements IView {
         model.setTelefone(lerTelefone(scanner));
     }
 
+    public void cadastrarEndereco(UserModel model, Scanner scanner) {
+        model.setCep(lerInt(scanner, "Cep: "));
+        scanner.nextLine();
+        model.setEstado(lerString(scanner, "Estado: "));
+        model.setCidade(lerString(scanner, "Cidade: "));
+        model.setRua(lerString(scanner, "Rua: "));
+        model.setBairro(lerString(scanner, "Bairro: "));
+        model.setNumero(lerInt(scanner, "Numero: "));
+    }
+
     public void logar(Scanner scanner, UserModel model) {
         model.setEmail(lerEmail(scanner));
         model.setSenha(lerSenha(scanner));
@@ -41,7 +49,7 @@ public class UserView implements IView {
     public int getId(Scanner scanner) {
         int id;
         while (true) {
-            System.out.print("Digite o ID da reserva que deseja cancelar: ");
+            System.out.print("Digite o ID: ");
             if (scanner.hasNextInt()) {
                 id = scanner.nextInt();
                 break;
@@ -101,7 +109,38 @@ public class UserView implements IView {
         return telefone;
     }
 
-    public void fazerReserva(Scanner scanner, BookingModel reserva) {
+    public String lerString(Scanner scanner, String nome) {
+        String string;
+        while(true){
+            System.out.print(nome);
+            string = scanner.nextLine();
+            string = string.trim();
+            if(!(string.length() > 0)){
+                System.out.println("Nome do(a) " + nome + " invalido, tente novamente!");
+            }else{
+                break;
+            }
+            
+        }
+        return string;
+    }
+
+    public int lerInt(Scanner scanner, String nome) {
+        int integer;
+        while (true) {
+            System.out.print(nome);
+            if (scanner.hasNextInt()) {
+                integer = scanner.nextInt();
+                break;
+            } else {
+                System.out.println("Por favor, insira um número válido.");
+                scanner.next();
+            }
+        }
+        return integer;
+    }
+    
+    public void fazerReserva(Scanner scanner, ReservaModel reserva) {
         LocalController localController = new LocalController();
 
         LocalModel localModel = null;
@@ -143,7 +182,7 @@ public class UserView implements IView {
         return LocalTime.parse(horarioInput);
     }
 
-    public LocalTime obterDuracao(LocalModel localModel, Scanner scanner, BookingModel reserva) {
+    public LocalTime obterDuracao(LocalModel localModel, Scanner scanner, ReservaModel reserva) {
         String horarioInput;
 
         if (localModel.getTempoMaximo().getHour() > 1) {
@@ -177,6 +216,25 @@ public class UserView implements IView {
     }
 
     public void listarReservas(ResultSet rs) throws SQLException {
+        String line = "-------------------------------------------------------------------";
+        String padrao = "| %-5s | %-10s | %-8s | %-8s | %-10s | %-5s |%n";
+        System.out.println(line);
+        System.out.printf(padrao, "ID", "Data", "Inicio", "Fim", "Status",
+                "IdLocal");
+        System.out.println(line);
+        while (rs.next()) {
+            System.out.printf(padrao,
+                    rs.getInt("idreserva"),
+                    rs.getDate("data"),
+                    rs.getTime("horario_inicio"),
+                    rs.getTime("horario_fim"),
+                    rs.getString("status"),
+                    rs.getInt("idLocal"));
+        }
+        System.out.println(line);
+    }
+
+    public void listarReservasEvento(ResultSet rs) throws SQLException {
         String line = "-------------------------------------------------------------------";
         String padrao = "| %-5s | %-10s | %-8s | %-8s | %-10s | %-5s |%n";
         System.out.println(line);
@@ -256,7 +314,8 @@ public class UserView implements IView {
         System.out.println("3. Cancelar Reserva");
         System.out.println("4. Informações pessoais");
         System.out.println("5. Alterar informações");
-        System.out.println("6. Sair");
+        System.out.println("6. Fazer Reserva Evento");
+        System.out.println("7. Sair");
         System.out.print("Escolha uma opção: ");
     }
 }

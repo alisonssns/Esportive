@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 
-import model.BookingModel;
+import model.ReservaModel;
 import model.UserModel;
 
 public class UserUtils {
@@ -20,6 +20,16 @@ public class UserUtils {
         values.add(model.getEmail());
         values.add(model.getSenha());
         values.add("cli");
+    }
+
+    public void cadastrarEndereco(UserModel model, ArrayList<Object> values) {
+        values.clear();
+        values.add(model.getCep());
+        values.add(model.getEstado());
+        values.add(model.getCidade());
+        values.add(model.getBairro());
+        values.add(model.getRua());
+        values.add(model.getNumero());
     }
 
     public void telefone(UserModel model, ArrayList<Object> values) {
@@ -35,7 +45,7 @@ public class UserUtils {
     }
 
 
-    public void fazerReserva(String cpf, BookingModel reserva, ArrayList<Object> values) {
+    public void fazerReserva(String cpf, ReservaModel reserva, ArrayList<Object> values) {
         LocalDate creationDate = LocalDate.now();
         LocalTime creationTime = LocalTime.now().minusHours(1);
 
@@ -93,7 +103,7 @@ public class UserUtils {
     public boolean verificarTelefoneExistente(String telefone) {
         ArrayList<Object> values = new ArrayList<>();
         values.add(telefone);
-        String query = "SELECT COUNT(*) FROM usuario WHERE telefone = ?";
+        String query = "SELECT COUNT(*) FROM telefoneusuario WHERE numero = ?";
         try {
             ResultSet rs = crud.select(query, values);
              if (rs.next()) {

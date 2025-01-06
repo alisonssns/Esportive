@@ -1,6 +1,6 @@
 package controller;
 
-import model.BookingModel;
+import model.ReservaModel;
 import model.UserModel;
 import view.UserView;
 import utils.UserUtils;
@@ -13,7 +13,8 @@ import java.util.Scanner;
 
 public class UserController implements IUserAdmController {
     private final LocalController localController = new LocalController();
-    private final BookingModel modelReserva = new BookingModel();
+    private final EventController eventController = new EventController();
+    private final ReservaModel modelReserva = new ReservaModel();
     private final UserModel model = new UserModel();
     private final UserView view = new UserView();
     private final UserUtils utils = new UserUtils();
@@ -43,7 +44,7 @@ public class UserController implements IUserAdmController {
             return;
         }
 
-        String query = "INSERT INTO usuario (cpf, nome, email, senha, tipo) VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO usuario (cpf, nome, email, senha, tipo, status) VALUES (?, ?, ?, ?, ?, 'Ativo')";
         String queryT = "INSERT INTO telefoneusuario (numero, cpfUsuario) VALUES (?, ?)";
 
         values.clear();
@@ -71,8 +72,8 @@ public class UserController implements IUserAdmController {
         try (ResultSet rsUsuario = crud.select(query, values)) {
             if (rsUsuario.next()) {
                 System.out.println("Seja bem-vindo: " + rsUsuario.getString("nome"));
-                addTelefone();
                 loginSuccess(rsUsuario);
+                addTelefone();
                 return true;
             } else {
                 System.out.println("Usuário não encontrado.");
@@ -125,13 +126,13 @@ public class UserController implements IUserAdmController {
 
     public boolean listarReservas(String cpf) {
         values.clear();
-        String query = "SELECT * FROM reserva WHERE cpfUsuario = ? and status != 'CANCELADA'";
+        String query = "SELECT * FROM reserva WHERE cpfUsuario = ?";
         values.add(cpf);
-    
+
         ResultSet rs = null;
         try {
             rs = crud.select(query, values);
-            if (rs != null && rs.next()) {
+            if (rs != null) {
                 view.listarReservas(rs);
                 return true;
             } else {
@@ -144,7 +145,29 @@ public class UserController implements IUserAdmController {
             return false;
         }
     }
-    
+
+    // public boolean listarReservasEventos(String cpf) {
+    //     values.clear();
+    //     String query = "SELECT * FROM reservaevento WHERE cpfUsuario = ?";
+    //     values.add(cpf);
+
+    //     ResultSet rs = null;
+    //     try {
+    //         rs = crud.select(query, values);
+    //         if (rs != null) {
+    //             view.listarReservasEventos(rs);
+    //             return true;
+    //         } else {
+    //             System.out.println("Nenhuma reserva encontrada para este CPF.");
+    //             return false;
+    //         }
+    //     } catch (SQLException e) {
+    //         System.err.println("Erro ao executar a consulta: " + e.getMessage());
+    //         e.printStackTrace();
+    //         return false;
+    //     }
+    // }
+
     public void cancelarReserva(Scanner scanner, String cpf) {
         listarReservas(cpf);
         int idreserva = view.getId(scanner);
@@ -210,6 +233,108 @@ public class UserController implements IUserAdmController {
         }
     }
 
+    public void cadastrarEndereco(Scanner scanner) {
+        values.clear();
+
+        view.cadastrarEndereco(model, scanner);
+        utils.cadastrarEndereco(model, values);
+        values.add(model.getCpf());
+        String query = "UPDATE usuario SET cep = ?, estado = ?, cidade = ?, bairro = ?,  rua = ?, numero = ? WHERE cpf = ?";
+
+        try {
+            crud.update(query, values);
+        } catch (SQLException e) {
+            System.out.println("Erro ao cadastrar Endereço: " + e.getMessage());
+        }
+    }
+
+    public boolean verificarEndereco(String cpf) {
+        String query = "select cep from usuario WHERE cpf = ?";
+        values.clear();
+        values.add(cpf);
+
+        try {
+            ResultSet rs = crud.select(query, values);
+            if (rs.next()) {
+                int cep = rs.getInt("cep");
+                if (cep > 0) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao verificar a reserva: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public void fazerReservaEvento(Scanner scanner) {
+        eventController.listar();
+        int id = view.getId(scanner);
+
+        if (!verificarVagasEvento(id)) {
+            return;
+        }
+
+        if (reservaDuplicada(model.getCpf(), id)) {
+            return;
+        }
+
+        values.clear();
+        values.add(model.getCpf());
+        values.add(id);
+
+        String query = "INSERT INTO reservaEvento(cpfUsuario, idEvento, status) values (?,?,'CONFIRMADO')";
+
+        try {
+            crud.insert(query, values);
+            eventController.reservar(id);
+        } catch (SQLException e) {
+            System.out.println("Erro ao realizar a reserva: " + e.getMessage());
+        }
+    }
+
+    public boolean reservaDuplicada(String cpf, int idLocal) {
+        values.clear();
+        values.add(cpf);
+        values.add(idLocal);
+        String query = "SELECT COUNT(*) FROM reservaEvento WHERE cpfUsuario = ? and idEvento = ?";
+
+        try {
+            ResultSet rs = crud.select(query, values);
+            if (rs.next()) {
+                if(rs.getInt("COUNT(*)") > 0){
+                    System.out.println("Você já fez reserva neste local!");
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao realizar a reserva: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public boolean verificarVagasEvento(int id) {
+        values.clear();
+        values.add(id);
+        String query = "SELECT capacidade, quantReservados FROM evento WHERE id = ?";
+
+        try {
+            ResultSet rs = crud.select(query, values);
+            if (rs.next()) {
+                if (((rs.getInt("capacidade") - rs.getInt("quantReservados")) > 0)) {
+                    return true;
+                } else {
+                    System.out.println("Este local não tem vagas suficientes");
+                }
+            } else {
+                System.out.println("Evento não encontrado!");
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao realizar a reserva: " + e.getMessage());
+        }
+        return false;
+    }
+
     @Override
     public boolean exibirTelaInicial(Scanner scanner) {
         int opcao;
@@ -228,14 +353,21 @@ public class UserController implements IUserAdmController {
 
     @Override
     public boolean exibirMenuPrincipal(Scanner scanner) {
+        if (!verificarEndereco(model.getCpf())) {
+            System.out.println(
+                    "Você não tem um endereço cadastrado, você será redirecionado a tela de cadastro de endereço!");
+            cadastrarEndereco(scanner);
+        }
+
         int opcao;
         do {
             view.exibirMenuPrincipal();
             opcao = lerOpcaoDoUsuario(scanner);
-            if (opcao != 6) {
+            if (opcao != 7) {
                 executarOpcaoMenuPrincipal(scanner, opcao);
             }
-        } while (opcao != 6);
+        } while (opcao != 7);
+
         return false;
     }
 
@@ -282,6 +414,9 @@ public class UserController implements IUserAdmController {
                 break;
             case 5:
                 atualizarInfo(scanner);
+                break;
+            case 6:
+                fazerReservaEvento(scanner);
                 break;
             default:
                 System.out.println("Opção inválida! Tente novamente.");

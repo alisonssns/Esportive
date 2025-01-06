@@ -1,10 +1,10 @@
 package controller;
 
-import model.AdminModel;
 import view.AdminView;
-import model.BookingModel;
-import model.UserModel;
 import view.UserView;
+import model.AdminModel;
+import model.ReservaModel;
+import model.UserModel;
 import utils.AdminUtils;
 import utils.CRUD;
 import utils.UserUtils;
@@ -17,7 +17,8 @@ import java.util.Scanner;
 public class AdminController implements IUserAdmController {
     private UserController usuarioController = new UserController();
     private LocalController localController = new LocalController();
-    private final BookingModel reservaModel = new BookingModel();
+    private EventController eventoController = new EventController();
+    private final ReservaModel reservaModel = new ReservaModel();
     private AdminModel model = new AdminModel();
     private AdminView view = new AdminView();
     private AdminUtils utils = new AdminUtils();
@@ -35,6 +36,10 @@ public class AdminController implements IUserAdmController {
     @Override
     public void cadastrar(Scanner scanner) {
         usuarioController.cadastrar(scanner);
+    }
+
+    public void cadastrarEvento(Scanner scanner) {
+        eventoController.cadastrar(scanner);
     }
 
     @Override
@@ -251,10 +256,10 @@ public class AdminController implements IUserAdmController {
             view.exibirMenuPrincipal();
             opcao = lerOpcaoDoUsuario(scanner);
             scanner.nextLine();
-            if (opcao != 9) {
+            if (opcao != 10) {
                 executarOpcaoMenuPrincipal(scanner, opcao);
             }
-        } while (opcao != 9);
+        } while (opcao != 10);
         return false;
     }
 
@@ -311,6 +316,9 @@ public class AdminController implements IUserAdmController {
                 break;
             case 8:
                 exibirInfo();
+                break;
+            case 9:
+                cadastrarEvento(scanner);
                 break;
             default:
                 System.out.println("Opção inválida! Tente novamente.");

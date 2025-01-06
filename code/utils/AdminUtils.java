@@ -9,7 +9,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 
 import model.AdminModel;
-import model.BookingModel;
+import model.ReservaModel;
 import model.UserModel;
 
 public class AdminUtils {
@@ -26,7 +26,7 @@ public class AdminUtils {
         model.setSenha(rsUsuario.getString("senha"));
     }
 
-    public void fazerReserva(String cpf, BookingModel reserva, ArrayList<Object> values) {
+    public void fazerReserva(String cpf, ReservaModel reserva, ArrayList<Object> values) {
         LocalDate creationDate = LocalDate.now();
         LocalTime creationTime = LocalTime.now().minusHours(1);
 

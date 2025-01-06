@@ -96,7 +96,8 @@ public class AdminView implements IView {
         System.out.println("6. Listar Reservas");
         System.out.println("7. Cancelar Reserva");
         System.out.println("8. Exibir Info");
-        System.out.println("9. Sair");
+        System.out.println("9. Cadastrar Evento");
+        System.out.println("10. Sair");
         System.out.print("Escolha uma opção: ");
     }
 
