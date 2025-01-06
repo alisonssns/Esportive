@@ -146,28 +146,6 @@ public class UserController implements IUserAdmController {
         }
     }
 
-    // public boolean listarReservasEventos(String cpf) {
-    //     values.clear();
-    //     String query = "SELECT * FROM reservaevento WHERE cpfUsuario = ?";
-    //     values.add(cpf);
-
-    //     ResultSet rs = null;
-    //     try {
-    //         rs = crud.select(query, values);
-    //         if (rs != null) {
-    //             view.listarReservasEventos(rs);
-    //             return true;
-    //         } else {
-    //             System.out.println("Nenhuma reserva encontrada para este CPF.");
-    //             return false;
-    //         }
-    //     } catch (SQLException e) {
-    //         System.err.println("Erro ao executar a consulta: " + e.getMessage());
-    //         e.printStackTrace();
-    //         return false;
-    //     }
-    // }
-
     public void cancelarReserva(Scanner scanner, String cpf) {
         listarReservas(cpf);
         int idreserva = view.getId(scanner);
