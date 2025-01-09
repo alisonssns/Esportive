@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 import model.EventModel;
-import validation.TimeHourValidation;
+import validations.TimeHourValidation;
 
 public class EventView {
     TimeHourValidation validation = new TimeHourValidation();

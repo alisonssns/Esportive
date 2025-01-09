@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 import model.AdminModel;
-import validation.UserValidation;
+import validations.UserValidation;
 
 public class AdminView implements IView {
     UserValidation validation = new UserValidation();

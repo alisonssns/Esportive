@@ -12,8 +12,8 @@ import controller.LocalController;
 import model.LocalModel;
 import model.ReservaModel;
 import model.UserModel;
-import validation.TimeHourValidation;
-import validation.UserValidation;
+import validations.TimeHourValidation;
+import validations.UserValidation;
 
 public class UserView implements IView {
     TimeHourValidation reservaValidator = new TimeHourValidation();

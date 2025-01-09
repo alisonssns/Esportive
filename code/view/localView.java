@@ -1,7 +1,7 @@
 package view;
 
 import model.LocalModel;
-import validation.TimeHourValidation;
+import validations.TimeHourValidation;
 
 import java.sql.SQLException;
 import java.time.LocalTime;
