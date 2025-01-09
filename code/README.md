@@ -1,7 +1,7 @@
 # Projeto Acadêmico - Sistema de Reservas de Espaços Esportivos Públicos
 
 ## Descrição
-Estes codigos foi desenvolvido principalmente por **Alisson Luis Cordeiro de Arruda** a partir das análises de requisitos e histórias de usuário definidas pela equipe. O objetivo é fornecer uma plataforma digital para facilitar o acesso a espaços esportivos públicos em Pinhais, promovendo a prática de esportes e melhorando a saúde da população.
+Estes codigos foi desenvolvido principalmente por **Alisson Luis Cordeiro de Arruda** e **Guilherme Kazuya Mizutani** a partir das análises de requisitos e histórias de usuário definidas pela equipe. O objetivo é fornecer uma plataforma digital para facilitar o acesso a espaços esportivos públicos em Pinhais, promovendo a prática de esportes e melhorando a saúde da população.
 
 ## Estrutura do Projeto
 O projeto foi estruturado utilizando o modelo **MVC (Model-View-Controller)**, separando as responsabilidades em três componentes principais:
