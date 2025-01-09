@@ -141,17 +141,46 @@ public class EventController {
         return false;
     }
 
-    private int numReservas(ArrayList<Object> values) {
-        String query = "SELECT COUNT(*) FROM reservaevento WHERE id = ?";
+    public boolean reservaDuplicada(String cpf, int idLocal) {
+        values.clear();
+        values.add(cpf);
+        values.add(idLocal);
+        String query = "SELECT COUNT(*) FROM reservaEvento WHERE cpfUsuario = ? and idEvento = ?";
+
         try {
             ResultSet rs = crud.select(query, values);
             if (rs.next()) {
-                return rs.getInt("COUNT(*)");
+                if(rs.getInt("COUNT(*)") > 0){
+                    System.out.println("Você já fez reserva neste local!");
+                    return true;
+                }
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao verificar a reserva: " + e.getMessage());
+            System.out.println("Erro ao realizar a reserva: " + e.getMessage());
         }
-        return 0;
+        return false;
+    }
+
+    public boolean verificarVagasEvento(int id) {
+        values.clear();
+        values.add(id);
+        String query = "SELECT capacidade, quantReservados FROM evento WHERE id = ?";
+
+        try {
+            ResultSet rs = crud.select(query, values);
+            if (rs.next()) {
+                if (((rs.getInt("capacidade") - rs.getInt("quantReservados")) > 0)) {
+                    return true;
+                } else {
+                    System.out.println("Este local não tem vagas suficientes");
+                }
+            } else {
+                System.out.println("Evento não encontrado!");
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao realizar a reserva: " + e.getMessage());
+        }
+        return false;
     }
 
     public EventModel infoEvento(int idLocal) {
@@ -201,18 +230,4 @@ public class EventController {
         }
         return horarios;
     }
-
-    // public void listarHorariosDisponiveis(int idLocal, LocalDate data) {
-    // ArrayList<LocalTime> horariosReservados = listarReservasDia(idLocal, data);
-    // String sql = "SELECT horario_abertura, horario_fechamento FROM local WHERE
-    // idLocal = ?";
-    // values.clear();
-    // values.add(idLocal);
-
-    // try (ResultSet rs = crud.select(sql, values)) {
-    // view.exibirHorariosDisponiveis(horariosReservados, rs);
-    // } catch (SQLException e) {
-    // System.err.println("Erro ao listar horários disponíveis: " + e.getMessage());
-    // }
-    // }
 }

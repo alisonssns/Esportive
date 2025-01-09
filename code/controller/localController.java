@@ -22,7 +22,7 @@ public class LocalController {
         values.clear();
         view.cadastrar(scanner, model);
         utils.cadastrar(model, values);
-        String sql = "INSERT INTO local (nome, tipo, cep, numero, limite_por_dia, tempo_maximo, horario_abertura, horario_funcionamento) VALUES (?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO local (nome, cep,tipo, numero, tempo_maximo, horario_abertura, horario_fechamento) VALUES (?,?,?,?,?,?,?)";
 
         try {
             crud.insert(sql, values);

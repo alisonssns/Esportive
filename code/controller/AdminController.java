@@ -42,6 +42,25 @@ public class AdminController implements IUserAdmController {
         eventoController.cadastrar(scanner);
     }
 
+    public void cadastrarLocal(Scanner scanner) {
+        localController.cadastrar(scanner);
+    }
+
+    public void removerLocal(Scanner scanner) {
+        values.clear();
+        localController.listar();
+        int id = view.getId(scanner);
+        values.add(id);
+
+        String query = "DELETE FROM local where idLocal = ?";
+
+        try {
+            crud.delete(query, values);
+        } catch (SQLException e) {
+            System.out.println("Erro ao deletar local: " + e.getMessage());
+        }
+    }
+
     @Override
     public boolean logar(Scanner scanner) {
         values.clear();
@@ -256,10 +275,10 @@ public class AdminController implements IUserAdmController {
             view.exibirMenuPrincipal();
             opcao = lerOpcaoDoUsuario(scanner);
             scanner.nextLine();
-            if (opcao != 10) {
+            if (opcao != 12) {
                 executarOpcaoMenuPrincipal(scanner, opcao);
             }
-        } while (opcao != 10);
+        } while (opcao != 12);
         return false;
     }
 
@@ -297,27 +316,33 @@ public class AdminController implements IUserAdmController {
                 cadastrar(scanner);
                 break;
             case 2:
-                listarUsuarios();
+                cadastrarLocal(scanner);
                 break;
             case 3:
-                bloquearUsuario(scanner);
+                removerLocal(scanner);
                 break;
             case 4:
-                atualizarInfo(scanner);
+                listarUsuarios();
                 break;
             case 5:
-                fazerReserva(scanner);
+                bloquearUsuario(scanner);
                 break;
             case 6:
-                listarReservas(scanner);
+                atualizarInfo(scanner);
                 break;
             case 7:
-                cancelarReserva(scanner);
+                fazerReserva(scanner);
                 break;
             case 8:
-                exibirInfo();
+                listarReservas(scanner);
                 break;
             case 9:
+                cancelarReserva(scanner);
+                break;
+            case 10:
+                exibirInfo();
+                break;
+            case 11:
                 cadastrarEvento(scanner);
                 break;
             default:

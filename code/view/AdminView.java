@@ -89,15 +89,17 @@ public class AdminView implements IView {
     public void exibirMenuPrincipal() {
         System.out.println("\n--- Menu do Administrador ---");
         System.out.println("1. Adicionar Usuário");
-        System.out.println("2. Listar Usuários");
-        System.out.println("3. Bloquear Usuário");
-        System.out.println("4. Atualizar Usuário");
-        System.out.println("5. Fazer Reserva");
-        System.out.println("6. Listar Reservas");
-        System.out.println("7. Cancelar Reserva");
-        System.out.println("8. Exibir Info");
-        System.out.println("9. Cadastrar Evento");
-        System.out.println("10. Sair");
+        System.out.println("2. Adicionar Local");
+        System.out.println("3. Remover Local");
+        System.out.println("4. Listar Usuários");
+        System.out.println("5. Bloquear Usuário");
+        System.out.println("6. Atualizar Usuário");
+        System.out.println("7. Fazer Reserva");
+        System.out.println("8. Listar Reservas");
+        System.out.println("9. Cancelar Reserva");
+        System.out.println("10. Exibir Info");
+        System.out.println("11. Cadastrar Evento");
+        System.out.println("12. Sair");
         System.out.print("Escolha uma opção: ");
     }
 

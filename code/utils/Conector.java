@@ -1,4 +1,4 @@
-package controller;
+package utils;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;

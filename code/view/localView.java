@@ -16,18 +16,18 @@ public class LocalView {
         System.out.print("Nome: ");
         local.setNome(scanner.nextLine());
         System.out.print("Cep: ");
-        local.setCep(scanner.nextLine());
+        local.setCep(scanner.nextInt());
+        scanner.nextLine();
         System.out.print("Tipo: ");
         local.setTipo(scanner.nextLine());
         System.out.print("Numero: ");
         local.setNumero(scanner.nextInt()); 
-        System.out.print("Limites de reservas por dia (por usuário): ");
-        local.setLimiteDia(scanner.nextInt());
-        System.out.print("Tempo máximo de uma reserva (em horas): ");
+        scanner.nextLine();
+        System.out.println("Tempo máximo de uma reserva (em horas): ");
         local.setTempoMaximo(obterHorario(scanner));
-        System.out.print("Horario de abertura: ");
+        System.out.println("Horario de abertura: ");
         local.setHorarioAbertura(obterHorario(scanner));
-        System.out.print("Horario de fechamento: ");
+        System.out.println("Horario de fechamento: ");
         local.setHorarioFechamento(obterHorario(scanner));
     }
 
@@ -49,7 +49,7 @@ public class LocalView {
     private LocalTime obterHorario(Scanner scanner) {
         String horarioInput;
         do {
-            System.out.print("Escolha o horário da reserva (HH:mm): ");
+            System.out.print("Horas (HH:mm): ");
             horarioInput = scanner.nextLine();
         } while (!validation.validarHorario(horarioInput));
 
@@ -58,17 +58,17 @@ public class LocalView {
 
     public void listar(ResultSet rs) throws SQLException {
         String line = "----------------------------------------------------------------------------------------------------------------------------------------------";
-
+        String padrao = "| %-5s | %-30s | %-20s | %-10s | %-7s | %-12s | %-16s | %-18s |%n";
         System.out.println(line);
 
-        System.out.printf("| %-5s | %-30s | %-20s | %-10s | %-7s | %-12s | %-16s | %-18s |%n",
+        System.out.printf(padrao,
                 "ID", "Nome", "Tipo", "CEP", "Número", "Tempo máximo", "Horário abertura",
                 "Horário fechamento");
 
         System.out.println(line);
 
         while (rs.next()) {
-            System.out.printf("| %-5s | %-30s | %-20s | %-10s | %-7s | %-12s | %-16s | %-18s |%n",
+            System.out.printf(padrao,
                     rs.getInt("idLocal"), rs.getString("nome"), rs.getString("tipo"),
                     rs.getString("cep"), rs.getInt("numero"), rs.getTime("tempo_maximo"),
                     rs.getTime("horario_abertura"), rs.getTime("horario_fechamento"));

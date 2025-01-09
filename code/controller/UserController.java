@@ -71,8 +71,11 @@ public class UserController implements IUserAdmController {
 
         try (ResultSet rsUsuario = crud.select(query, values)) {
             if (rsUsuario.next()) {
+                if(rsUsuario.getString("status") == "Bloqueado"){
+                    System.out.println("");
+                }
                 System.out.println("Seja bem-vindo: " + rsUsuario.getString("nome"));
-                loginSuccess(rsUsuario);
+                utils.loginSuccess(rsUsuario, model);
                 addTelefone();
                 return true;
             } else {
@@ -83,13 +86,6 @@ public class UserController implements IUserAdmController {
         }
 
         return false;
-    }
-
-    private void loginSuccess(ResultSet rsUsuario) throws SQLException {
-        model.setCpf(rsUsuario.getString("cpf"));
-        model.setNome(rsUsuario.getString("nome"));
-        model.setEmail(rsUsuario.getString("email"));
-        model.setSenha(rsUsuario.getString("senha"));
     }
 
     private void addTelefone() {
@@ -249,11 +245,11 @@ public class UserController implements IUserAdmController {
         eventController.listar();
         int id = view.getId(scanner);
 
-        if (!verificarVagasEvento(id)) {
+        if (!eventController.verificarVagasEvento(id)) {
             return;
         }
 
-        if (reservaDuplicada(model.getCpf(), id)) {
+        if (eventController.reservaDuplicada(model.getCpf(), id)) {
             return;
         }
 
@@ -269,48 +265,6 @@ public class UserController implements IUserAdmController {
         } catch (SQLException e) {
             System.out.println("Erro ao realizar a reserva: " + e.getMessage());
         }
-    }
-
-    public boolean reservaDuplicada(String cpf, int idLocal) {
-        values.clear();
-        values.add(cpf);
-        values.add(idLocal);
-        String query = "SELECT COUNT(*) FROM reservaEvento WHERE cpfUsuario = ? and idEvento = ?";
-
-        try {
-            ResultSet rs = crud.select(query, values);
-            if (rs.next()) {
-                if(rs.getInt("COUNT(*)") > 0){
-                    System.out.println("Você já fez reserva neste local!");
-                    return true;
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Erro ao realizar a reserva: " + e.getMessage());
-        }
-        return false;
-    }
-
-    public boolean verificarVagasEvento(int id) {
-        values.clear();
-        values.add(id);
-        String query = "SELECT capacidade, quantReservados FROM evento WHERE id = ?";
-
-        try {
-            ResultSet rs = crud.select(query, values);
-            if (rs.next()) {
-                if (((rs.getInt("capacidade") - rs.getInt("quantReservados")) > 0)) {
-                    return true;
-                } else {
-                    System.out.println("Este local não tem vagas suficientes");
-                }
-            } else {
-                System.out.println("Evento não encontrado!");
-            }
-        } catch (SQLException e) {
-            System.out.println("Erro ao realizar a reserva: " + e.getMessage());
-        }
-        return false;
     }
 
     @Override

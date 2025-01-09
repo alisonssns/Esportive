@@ -44,6 +44,12 @@ public class UserUtils {
         values.add(model.getSenha());
     }
 
+    public void loginSuccess(ResultSet rsUsuario, UserModel model) throws SQLException {
+        model.setCpf(rsUsuario.getString("cpf"));
+        model.setNome(rsUsuario.getString("nome"));
+        model.setEmail(rsUsuario.getString("email"));
+        model.setSenha(rsUsuario.getString("senha"));
+    }
 
     public void fazerReserva(String cpf, ReservaModel reserva, ArrayList<Object> values) {
         LocalDate creationDate = LocalDate.now();

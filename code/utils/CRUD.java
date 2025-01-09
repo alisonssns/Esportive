@@ -6,8 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import controller.Conector;
-
 public class CRUD {
 
     public ResultSet select(String query, ArrayList<Object> values) throws SQLException {

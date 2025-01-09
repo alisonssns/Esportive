@@ -4,7 +4,7 @@ import java.time.LocalTime;
 public class LocalModel {
     private String nome;
     private String tipo;
-    private String cep;
+    private int cep;
     private int numero;
     private int limiteDia;
     private LocalTime tempoMaximo;
@@ -27,11 +27,11 @@ public class LocalModel {
         this.tipo = tipo;
     }
 
-    public String getCep() {
+    public int getCep() {
         return cep;
     }
 
-    public void setCep(String cep) {
+    public void setCep(int cep) {
         this.cep = cep;
     }
 
