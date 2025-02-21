@@ -13,6 +13,17 @@ Desenvolvemos este projeto no Instituto Federal do Paraná com o auxilio dos pro
 - **Objetivo 4:** Aumentar a taxa de utilização dos espaços esportivos públicos.
 - **Objetivo 5:** Implementar uma plataforma segura e escalável para suportar o crescimento futuro.
 
+## Uso 
+
+### Faça a clonagem do repositorio
+```bash
+git clone https://github.com/alisonssns/TechEase
+```
+### Compile o arquivo
+```bash
+Main.java
+```
+
 ## Funcionalidades
 
 ### Usuário Cliente
@@ -41,6 +52,3 @@ Desenvolvemos este projeto no Instituto Federal do Paraná com o auxilio dos pro
 - MySQL
 - Jira
 - GitHub
-
-## Links Importantes
-- [Repositório do Projeto no GitHub](https://github.com/alisonssns/Esportive)
